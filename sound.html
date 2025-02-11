@@ -3,208 +3,266 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tone Generator Quiz</title>
+    <title>Tone Generator Survey</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        .column { display: inline-block; vertical-align: top; width: 30%; padding: 10px; }
         button { padding: 10px 20px; margin: 10px; cursor: pointer; }
         select, input { padding: 5px; margin: 5px; }
-        #frequencyValue { font-weight: bold; }
-        #frequency { width: 80%; }
+        #frequencyValue1, #frequencyValue2, #frequencyValue3 { font-weight: bold; }
+        #frequency1, #frequency2, #frequency3 { width: 80%; }
+        .status-icon { font-size: 20px; margin-left: 10px; }
     </style>
+    <script type="text/javascript" src="./helper.js"></script>
 </head>
 <body>
 
-    <h1>Tone Generator & Quiz</h1>
-
-    <label for="frequency">Frequency (Hz): </label>
-    <input type="range" id="frequency" value="440" min="10" max="8888" step="1" oninput="updateFrequencyValue()">
-    <span id="frequencyValue">440</span>
-    
-    <label for="waveform">Waveform: </label>
-    <select id="waveform" onchange="updateWaveform()">
-        <option value="sine">Sine</option>
-        <option value="square">Square</option>
-        <option value="triangle">Triangle</option>
-        <option value="sawtooth">Sawtooth</option>
-    </select>
-
-    <br>
-    <label for="note">Note: </label>
-    <select id="note" onchange="updateFrequencyFromNote()">
-        <option value="27.5">A 1</option>
-        <option value="29.1352">A# Bb 1</option>
-        <option value="30.8677">B 1</option>
-        <option value="32.7032">C 2</option>
-        <option value="34.6478">C# Db 2</option>
-        <option value="36.7081">D 2</option>
-        <option value="38.8909">D# Eb 2</option>
-        <option value="41.2034">E 2</option>
-        <option value="43.6535">F 2</option>
-        <option value="46.2493">F# Gb 2</option>
-        <option value="48.9994">G 2</option>
-        <option value="51.9131">G# Ab 2</option>
-        <option value="55">A 2</option>
-        <option value="58.2705">A# Bb 2</option>
-        <option value="61.7354">B 2</option>
-        <option value="65.4064">C 3</option>
-        <option value="69.2957">C# Db 3</option>
-        <option value="73.4162">D 3</option>
-        <option value="77.7817">D# Eb 3</option>
-        <option value="82.4069">E 3</option>
-        <option value="87.3071">F 3</option>
-        <option value="92.4986">F# Gb 3</option>
-        <option value="97.9989">G 3</option>
-        <option value="103.826">G# Ab 3</option>
-        <option value="110">A 3</option>
-        <option value="116.541">A# Bb 3</option>
-        <option value="123.471">B 3</option>
-        <option value="130.813">C 4</option>
-        <option value="138.591">C# Db 4</option>
-        <option value="146.832">D 4</option>
-        <option value="155.563">D# Eb 4</option>
-        <option value="164.814">E 4</option>
-        <option value="174.614">F 4</option>
-        <option value="184.997">F# Gb 4</option>
-        <option value="195.998">G 4</option>
-        <option value="207.652">G# Ab 4</option>
-        <option value="220">A 4</option>
-        <option value="233.082">A# Bb 4</option>
-        <option value="246.942">B 4</option>
-        <option value="261.626">C 5</option>
-        <option value="277.183">C# Db 5</option>
-        <option value="293.665">D 5</option>
-        <option value="311.127">D# Eb 5</option>
-        <option value="329.628">E 5</option>
-        <option value="349.228">F 5</option>
-        <option value="369.994">F# Gb 5</option>
-        <option value="391.995">G 5</option>
-        <option value="415.305">G# Ab 5</option>
-        <option value="440">A 5</option>
-        <option value="466.164">A# Bb 5</option>
-        <option value="493.883">B 5</option>
-        <option value="523.251">C 6</option>
-        <option value="554.365">C# Db 6</option>
-        <option value="587.33">D 6</option>
-        <option value="622.254">D# Eb 6</option>
-        <option value="659.255">E 6</option>
-        <option value="698.456">F 6</option>
-        <option value="739.989">F# Gb 6</option>
-        <option value="783.991">G 6</option>
-        <option value="830.609">G# Ab 6</option>
-        <option value="880">A 6</option>
-        <option value="932.328">A# Bb 6</option>
-        <option value="987.767">B 6</option>
-        <option value="1046.5">C 7</option>
-        <option value="1108.73">C# Db 7</option>
-        <option value="1174.66">D 7</option>
-        <option value="1244.51">D# Eb 7</option>
-        <option value="1318.51">E 7</option>
-        <option value="1396.91">F 7</option>
-        <option value="1479.98">F# Gb 7</option>
-        <option value="1567.98">G 7</option>
-        <option value="1661.22">G# Ab 7</option>
-        <option value="1760">A 7</option>
-        <option value="1864.66">A# Bb 7</option>
-        <option value="1975.53">B 7</option>
-        <option value="2093">C 8</option>
-        <option value="2217.46">C# Db 8</option>
-        <option value="2349.32">D 8</option>
-        <option value="2489.02">D# Eb 8</option>
-        <option value="2637.02">E 8</option>
-        <option value="2793.83">F 8</option>
-        <option value="2959.96">F# Gb 8</option>
-        <option value="3135.96">G 8</option>
-        <option value="3322.44">G# Ab 8</option>
-        <option value="3520">A 8</option>
-        <option value="3729.31">A# Bb 8</option>
-        <option value="3951.07">B 8</option>
-        <option value="4186.01">C 9</option>
-        <option value="4434.92">C# Db 9</option>
-        <option value="4698.63">D 9</option>
-        <option value="4978.03">D# Eb 9</option>
-        <option value="5274.04">E 9</option>
-        <option value="5587.65">F 9</option>
-        <option value="5919.91">F# Gb 9</option>
-        <option value="6271.93">G 9</option>
-        <option value="6644.88">G# Ab 9</option>
-        <option value="7040">A 9</option>
-        <option value="7458.62">A# Bb 9</option>
-        <option value="7902.13">B 9</option>
-    </select>
-
-    <br>
-    <label for="volume">Volume: </label>
-    <input type="range" id="volume" value="50" min="0" max="100" step="1" oninput="updateVolumeValue()">
-    <span id="volumeValue">50</span>   
+    <h1>Tone Generator & Tinnitus Matching</h1>
     <br> OBS: turn down your volume before hitting play <br>
 
-    <br>
-    <button onclick="playTone()">Play Tone</button>
-    <button onclick="stopTone()">Stop Tone</button>
+    <div class="column" id="sound1">
+        <h2>Sound 1</h2>
+        <label for="frequency1">Frequency (Hz): </label>
+        <input type="range" id="frequency1" value="440" min="10" max="14000" step="10" oninput="updateFrequencyValue(1)">
+        <br> <span id="frequencyValue1"> 440 Hz -  </span><br>
+        
+        <label for="waveform1">Waveform: </label>
+        <select id="waveform1" onchange="updateWaveform(1)">
+            <option value="sine">Sine</option>
+            <option value="square">Square</option>
+            <option value="triangle">Triangle</option>
+            <option value="sawtooth">Sawtooth</option>
+        </select>
+
+        <br>
+        <label for="volume1">Volume: </label>
+        <input type="range" id="volume1" value="50" min="0" max="100" step="1" oninput="updateVolumeValue(1)">
+        <span id="volumeValue1">50</span>
+
+        <br>
+        <button onclick="toggleTone(1)" id="toggleButton1">Play Tone</button>
+        <span id="statusIcon1" class="status-icon" >⏹️</span>
+
+    </div>
+
+    <div class="column" id="addSound2">
+        <button onclick="addSound(2)">Add Sound 2</button>
+    </div>
+
+    <div class="column" id="addSound3">
+        <button onclick="addSound(3)">Add Sound 3</button>
+    </div>
 
     <script>
-        let audioCtx, oscillator, gainNode;
+        let audioCtx1, oscillator1, gainNode1;
+        let audioCtx2, oscillator2, gainNode2;
+        let audioCtx3, oscillator3, gainNode3;
+        let isPlaying1 = false;
+        let isPlaying2 = false;
+        let isPlaying3 = false;
 
-        function updateFrequencyValue() {
-            const freq = document.getElementById("frequency").value;
-            document.getElementById("frequencyValue").textContent = freq;
-            if (oscillator) {
-                oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        function updateFrequencyValue(sound) {
+            const freq = document.getElementById(`frequency${sound}`).value;
+            document.getElementById(`frequencyValue${sound}`).textContent = freq;
+            if (sound === 1 && oscillator1) {
+                oscillator1.frequency.setValueAtTime(freq, audioCtx1.currentTime);
+            } else if (sound === 2 && oscillator2) {
+                oscillator2.frequency.setValueAtTime(freq, audioCtx2.currentTime);
+            } else if (sound === 3 && oscillator3) {
+                oscillator3.frequency.setValueAtTime(freq, audioCtx3.currentTime);
             }
-        }
-
-        function updateWaveform() {
-            const wave = document.getElementById("waveform").value;
-            if (oscillator) {
-                oscillator.type = wave;
-            }
-        }
-
-        function updateFrequencyFromNote() {
-            const freq = document.getElementById("note").value;
-            document.getElementById("frequency").value = freq;
-            document.getElementById("frequencyValue").textContent = freq;
-            if (oscillator) {
-                oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            }
-        }
-
-        function updateVolumeValue() {
-            const volume = document.getElementById("volume").value;
-            document.getElementById("volumeValue").textContent = volume;
-            if (gainNode) {
-                gainNode.gain.setValueAtTime(volume / 100, audioCtx.currentTime);
-            }
-        }
-
-        function playTone() {
-            if (audioCtx) {
-                audioCtx.close();
-            }
-
-            const freq = document.getElementById("frequency").value;
-            const wave = document.getElementById("waveform").value;
-            const volume = document.getElementById("volume").value;
             
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            oscillator = audioCtx.createOscillator();
-            gainNode = audioCtx.createGain();
-            
-            oscillator.type = wave;
-            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gainNode.gain.setValueAtTime(volume / 100, audioCtx.currentTime);
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.start();
+            //print type of freq
+            const note = getNoteFromFrequency(parseFloat(freq));
+            document.getElementById(`frequencyValue${sound}`).textContent = `${freq} Hz ~${note}`;
         }
 
-        function stopTone() {
-            if (oscillator) {
-                oscillator.stop();
-                audioCtx.close();
-                oscillator = null;
-                audioCtx = null;
+        function updateWaveform(sound) {
+            const wave = document.getElementById(`waveform${sound}`).value;
+            if (sound === 1 && oscillator1) {
+                oscillator1.type = wave;
+            } else if (sound === 2 && oscillator2) {
+                oscillator2.type = wave;
+            } else if (sound === 3 && oscillator3) {
+                oscillator3.type = wave;
+            }
+        }
+
+        function updateVolumeValue(sound) {
+            const volume = document.getElementById(`volume${sound}`).value;
+            document.getElementById(`volumeValue${sound}`).textContent = volume;
+            if (sound === 1 && gainNode1) {
+                gainNode1.gain.setValueAtTime(volume / 100, audioCtx1.currentTime);
+            } else if (sound === 2 && gainNode2) {
+                gainNode2.gain.setValueAtTime(volume / 100, audioCtx2.currentTime);
+            } else if (sound === 3 && gainNode3) {
+                gainNode3.gain.setValueAtTime(volume / 100, audioCtx3.currentTime);
+            }
+        }
+
+        function toggleTone(sound) {
+            if (sound === 1) {
+                if (isPlaying1) {
+                    stopTone(1);
+                } else {
+                    playTone(1);
+                }
+                isPlaying1 = !isPlaying1;
+                document.getElementById("toggleButton1").textContent = isPlaying1 ? "Stop Tone" : "Play Tone";
+            } else if (sound === 2) {
+                if (isPlaying2) {
+                    stopTone(2);
+                } else {
+                    playTone(2);
+                }
+                isPlaying2 = !isPlaying2;
+                document.getElementById("toggleButton2").textContent = isPlaying2 ? "Stop Tone" : "Play Tone";
+            } else if (sound === 3) {
+                if (isPlaying3) {
+                    stopTone(3);
+                } else {
+                    playTone(3);
+                }
+                isPlaying3 = !isPlaying3;
+                document.getElementById("toggleButton3").textContent = isPlaying3 ? "Stop Tone" : "Play Tone";
+            }
+        }
+
+        function playTone(sound) {
+            if (sound === 1) {
+                if (audioCtx1) {
+                    audioCtx1.close();
+                }
+                const freq = document.getElementById("frequency1").value;
+                const wave = document.getElementById("waveform1").value;
+                const volume = document.getElementById("volume1").value;
+                
+                audioCtx1 = new (window.AudioContext || window.webkitAudioContext)();
+                oscillator1 = audioCtx1.createOscillator();
+                gainNode1 = audioCtx1.createGain();
+                
+                oscillator1.type = wave;
+                oscillator1.frequency.setValueAtTime(freq, audioCtx1.currentTime);
+                gainNode1.gain.setValueAtTime(volume / 100, audioCtx1.currentTime);
+                
+                oscillator1.connect(gainNode1);
+                gainNode1.connect(audioCtx1.destination);
+                oscillator1.start();
+                document.getElementById("statusIcon1").textContent = "▶️";
+            } else if (sound === 2) {
+                if (audioCtx2) {
+                    audioCtx2.close();
+                }
+                const freq = document.getElementById("frequency2").value;
+                const wave = document.getElementById("waveform2").value;
+                const volume = document.getElementById("volume2").value;
+                
+                audioCtx2 = new (window.AudioContext || window.webkitAudioContext)();
+                oscillator2 = audioCtx2.createOscillator();
+                gainNode2 = audioCtx2.createGain();
+                
+                oscillator2.type = wave;
+                oscillator2.frequency.setValueAtTime(freq, audioCtx2.currentTime);
+                gainNode2.gain.setValueAtTime(volume / 100, audioCtx2.currentTime);
+                
+                oscillator2.connect(gainNode2);
+                gainNode2.connect(audioCtx2.destination);
+                oscillator2.start();
+                document.getElementById("statusIcon2").textContent = "▶️";
+            } else if (sound === 3) {
+                if (audioCtx3) {
+                    audioCtx3.close();
+                }
+                const freq = document.getElementById("frequency3").value;
+                const wave = document.getElementById("waveform3").value;
+                const volume = document.getElementById("volume3").value;
+                
+                audioCtx3 = new (window.AudioContext || window.webkitAudioContext)();
+                oscillator3 = audioCtx3.createOscillator();
+                gainNode3 = audioCtx3.createGain();
+                
+                oscillator3.type = wave;
+                oscillator3.frequency.setValueAtTime(freq, audioCtx3.currentTime);
+                gainNode3.gain.setValueAtTime(volume / 100, audioCtx3.currentTime);
+                
+                oscillator3.connect(gainNode3);
+                gainNode3.connect(audioCtx3.destination);
+                oscillator3.start();
+                document.getElementById("statusIcon3").textContent = "▶️";
+            }
+        }
+
+        function stopTone(sound) {
+            if (sound === 1 && oscillator1) {
+                oscillator1.stop();
+                audioCtx1.close();
+                oscillator1 = null;
+                audioCtx1 = null;
+                document.getElementById("statusIcon1").textContent = "⏹️";
+            } else if (sound === 2 && oscillator2) {
+                oscillator2.stop();
+                audioCtx2.close();
+                oscillator2 = null;
+                audioCtx2 = null;
+                document.getElementById("statusIcon2").textContent = "⏹️";
+            } else if (sound === 3 && oscillator3) {
+                oscillator3.stop();
+                audioCtx3.close();
+                oscillator3 = null;
+                audioCtx3 = null;
+                document.getElementById("statusIcon3").textContent = "⏹️";
+            }
+        }
+
+        function addSound(sound) {
+            if (sound === 2) {
+                document.getElementById('addSound2').innerHTML = `
+                    <h2>Sound 2</h2>
+                    <label for="frequency2">Frequency (Hz): </label>
+                    <input type="range" id="frequency2" value="440" min="10" max="14000" step="10" oninput="updateFrequencyValue(2)">
+                    <span id="frequencyValue2">440</span><br>
+                    
+                    <label for="waveform2">Waveform: </label>
+                    <select id="waveform2" onchange="updateWaveform(2)">
+                        <option value="sine">Sine</option>
+                        <option value="square">Square</option>
+                        <option value="triangle">Triangle</option>
+                        <option value="sawtooth">Sawtooth</option>
+                    </select>
+
+                    <br>
+                    <label for="volume2">Volume: </label>
+                    <input type="range" id="volume2" value="50" min="0" max="100" step="1" oninput="updateVolumeValue(2)">
+                    <span id="volumeValue2">50</span>
+
+                    <br>
+                    <button onclick="toggleTone(2)" id="toggleButton2">Play Tone</button>
+                    <span id="statusIcon2" class="status-icon">⏹️</span>
+                `;
+            } else if (sound === 3) {
+                document.getElementById('addSound3').innerHTML = `
+                    <h2>Sound 3</h2>
+                    <label for="frequency3">Frequency (Hz): </label>
+                    <input type="range" id="frequency3" value="440" min="10" max="14000" step="10" oninput="updateFrequencyValue(3)">
+                    <span id="frequencyValue3">440</span><br>
+                    
+                    <label for="waveform3">Waveform: </label>
+                    <select id="waveform3" onchange="updateWaveform(3)">
+                        <option value="sine">Sine</option>
+                        <option value="square">Square</option>
+                        <option value="triangle">Triangle</option>
+                        <option value="sawtooth">Sawtooth</option>
+                    </select>
+
+                    <br>
+                    <label for="volume3">Volume: </label>
+                    <input type="range" id="volume3" value="50" min="0" max="100" step="1" oninput="updateVolumeValue(3)">
+                    <span id="volumeValue3">50</span>
+
+                    <br>
+                    <button onclick="toggleTone(3)" id="toggleButton3">Play Tone</button>
+                    <span id="statusIcon3" class="status-icon">⏹️</span>
+                `;
             }
         }
     </script>
