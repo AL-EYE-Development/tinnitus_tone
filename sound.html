@@ -133,11 +133,17 @@
     </select>
 
     <br>
+    <label for="volume">Volume: </label>
+    <input type="range" id="volume" value="50" min="0" max="100" step="1" oninput="updateVolumeValue()">
+    <span id="volumeValue">50</span>   
+    <br> OBS: turn down your volume before hitting play <br>
+
+    <br>
     <button onclick="playTone()">Play Tone</button>
     <button onclick="stopTone()">Stop Tone</button>
 
     <script>
-        let audioCtx, oscillator;
+        let audioCtx, oscillator, gainNode;
 
         function updateFrequencyValue() {
             const freq = document.getElementById("frequency").value;
@@ -163,16 +169,33 @@
             }
         }
 
+        function updateVolumeValue() {
+            const volume = document.getElementById("volume").value;
+            document.getElementById("volumeValue").textContent = volume;
+            if (gainNode) {
+                gainNode.gain.setValueAtTime(volume / 100, audioCtx.currentTime);
+            }
+        }
+
         function playTone() {
+            if (audioCtx) {
+                audioCtx.close();
+            }
+
             const freq = document.getElementById("frequency").value;
             const wave = document.getElementById("waveform").value;
+            const volume = document.getElementById("volume").value;
             
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             oscillator = audioCtx.createOscillator();
+            gainNode = audioCtx.createGain();
+            
             oscillator.type = wave;
             oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(volume / 100, audioCtx.currentTime);
             
-            oscillator.connect(audioCtx.destination);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
             oscillator.start();
         }
 
@@ -180,6 +203,8 @@
             if (oscillator) {
                 oscillator.stop();
                 audioCtx.close();
+                oscillator = null;
+                audioCtx = null;
             }
         }
     </script>
