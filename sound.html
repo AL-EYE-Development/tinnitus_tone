@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tone Generator Quiz</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        select, input { padding: 5px; margin: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>Tone Generator & Quiz</h1>
+
+    <label for="frequency">Frequency (Hz): </label>
+    <input type="number" id="frequency" value="440" min="20" max="20000">
+    
+    <label for="waveform">Waveform: </label>
+    <select id="waveform">
+        <option value="sine">Sine</option>
+        <option value="square">Square</option>
+        <option value="triangle">Triangle</option>
+        <option value="sawtooth">Sawtooth</option>
+    </select>
+
+    <br>
+    <button onclick="playTone()">Play Tone</button>
+    <button onclick="stopTone()">Stop Tone</button>
+
+    <hr>
+
+    <!-- <h2>Quiz: Identify the Tone</h2>
+    <p>What frequency did you hear?</p>
+    
+    <input type="radio" name="answer" value="400"> 400 Hz <br>
+    <input type="radio" name="answer" value="440"> 440 Hz <br>
+    <input type="radio" name="answer" value="480"> 480 Hz <br>
+
+    <br>
+    <button onclick="checkAnswer()">Submit Answer</button>
+    <p id="result"></p> -->
+
+    <script>
+        let audioCtx, oscillator;
+
+        function playTone() {
+            const freq = document.getElementById("frequency").value;
+            const wave = document.getElementById("waveform").value;
+            
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            oscillator = audioCtx.createOscillator();
+            oscillator.type = wave;
+            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            oscillator.connect(audioCtx.destination);
+            oscillator.start();
+        }
+
+        function stopTone() {
+            if (oscillator) {
+                oscillator.stop();
+                audioCtx.close();
+            }
+        }
+
+        function checkAnswer() {
+            const selected = document.querySelector('input[name="answer"]:checked');
+            const correctFreq = document.getElementById("frequency").value;
+            const resultText = selected && selected.value == correctFreq ? 
+                "✅ Correct!" : "❌ Wrong, try again!";
+            document.getElementById("result").innerText = resultText;
+        }
+    </script>
+
+</body>
+</html>
