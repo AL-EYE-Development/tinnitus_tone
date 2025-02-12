@@ -101,8 +101,7 @@
         .box {
             display: inline-block;
             width: 100px;
-            height: 50px;
-            margin-right: 20px; /* Adds space to the right */
+            height: 25px;
         }
     </style>
     <link rel="stylesheet" type="text/css" href="styles.css">
@@ -163,10 +162,11 @@
     <hr>
 
     <!-- make this a button -->
+    <br> <div class="box"></div><br>
     <button onclick="handleMatchClick()" style="background-color: green;">
         Step 1: Click Here if sound now matches what you hear
     </button>
-    <br>
+    <br> <div class="box"></div><br>
     <!-- add a text box -->
     <input type="text" id="tinnitusMatch" placeholder="Enter your tinnitus frequency here" style="width: 50%; margin-top: 10px; padding: 5px;">
 
@@ -177,6 +177,12 @@
         Step 2: Follow the questionaire below to complete the survey.
     </button>
 
+    <br> <div class="box"></div><br>
+
+    <iframe width="640px" height="20000vh" src="https://forms.office.com/Pages/ResponsePage.aspx?id=I_FR8s7JjkSSdzS7KFkR2QlLtcyM--1KpijKKDu9H1xUMjFYMkNKRzBRVTBBQzlVWEtFUE4xNTZKNC4u&embed=true" frameborder="0" marginwidth="0" marginheight="0" style="border: none; max-width:100%; max-height:100vh" allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen> </iframe>
+
+
+    
     <script type="text/javascript" src="./helper.js"></script>
     <script> 
         let audioCtx1, oscillator1, gainNode1;
