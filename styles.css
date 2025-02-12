@@ -1,0 +1,33 @@
+.triangle-wave {
+    width: 200px;
+    height: 100px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50'%3E%3Cpath d='M 0 25 L 25 0 L 50 25 L 75 50 L 100 25' stroke='%23000' fill='transparent' stroke-width='2'/%3E%3C/svg%3E");
+    background-size: 100px 50px;
+}
+
+.sawtooth-wave {
+    width: 200px;
+    height: 100px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50'%3E%3Cpath d='M 0 50 L 50 0 L 100 50' stroke='%23000' fill='transparent' stroke-width='2'/%3E%3C/svg%3E");
+    background-size: 100px 50px;
+}
+
+.square-wave {
+    width: 200px;
+    height: 100px;
+    background: repeating-linear-gradient(
+        90deg,
+        black 0%,
+        black 50%,
+        white 50%,
+        white 100%
+    );
+    background-size: 50px 100%;
+}
+
+.sine-wave {
+    width: 200px;
+    height: 100px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50'%3E%3Cpath d='M 0 25 Q 12.5 0 25 25 T 50 25 T 75 25 T 100 25' stroke='%23000' fill='transparent' stroke-width='2'/%3E%3C/svg%3E");
+    background-size: 100px 50px;
+}

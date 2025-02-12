@@ -1,5 +1,4 @@
-
-var test = function getNoteFromFrequency(frequency) {
+function getNoteFromFrequency(frequency) {
     if (frequency < 16.352) return "~C0"; 
     if (frequency < 17.324) return "C0";
     if (frequency < 18.354) return "C#0";
@@ -110,5 +109,5 @@ var test = function getNoteFromFrequency(frequency) {
     if (frequency < 7902.133) return "A#8";
     if (frequency < 8372.019) return "B8";
 
-    return "~B8"; // Out of range case
+    return "B8"; // Out of range case
 }

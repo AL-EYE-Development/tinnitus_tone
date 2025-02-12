@@ -7,25 +7,128 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
         .column { display: inline-block; vertical-align: top; width: 30%; padding: 10px; }
-        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:focus {
+            outline: 2px solid #0056b3;
+            outline-offset: 2px;
+        }
+
         select, input { padding: 5px; margin: 5px; }
         #frequencyValue1, #frequencyValue2, #frequencyValue3 { font-weight: bold; }
-        #frequency1, #frequency2, #frequency3 { width: 80%; }
-        .status-icon { font-size: 20px; margin-left: 10px; }
+        
+        /* Slider Styles */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 80%;
+            height: 8px;
+            background: #ddd;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #007BFF;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #007BFF;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        #volume1 {
+            width: 50%; /* Adjust the width as needed */
+        }
+
+        .modal {
+            display: block; /* Show the modal by default */
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .box {
+            display: inline-block;
+            width: 100px;
+            height: 50px;
+            margin-right: 20px; /* Adds space to the right */
+        }
     </style>
-    <script type="text/javascript" src="./helper.js"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Information Notice</h2>
+            <p>Please read the following information before proceeding.</p>
+            <button onclick="startCalibration()">Start Calibration</button>
+        </div>
+    </div>
+
 
     <h1>Tone Generator & Tinnitus Matching</h1>
     <br> OBS: turn down your volume before hitting play <br>
 
+    <!-- Pause All Tones button -->
+    <button onclick="pauseAllTones()" style="background-color: #2f2f2f;">Pause All Tones</button>
+    <br>
+
     <div class="column" id="sound1">
         <h2>Sound 1</h2>
-        <label for="frequency1">Frequency (Hz): </label>
-        <input type="range" id="frequency1" value="440" min="10" max="14000" step="10" oninput="updateFrequencyValue(1)">
-        <br> <span id="frequencyValue1"> 440 Hz -  </span><br>
-        
+
         <label for="waveform1">Waveform: </label>
         <select id="waveform1" onchange="updateWaveform(1)">
             <option value="sine">Sine</option>
@@ -34,14 +137,17 @@
             <option value="sawtooth">Sawtooth</option>
         </select>
 
+        <label for="frequency1">Frequency (Hz): </label>
+        <span id="frequencyValue1"> 440 Hz -  </span><br>
+        <input type="range" id="frequency1" value="440" min="10" max="14000" step="10" oninput="updateFrequencyValue(1)">
+        
         <br>
         <label for="volume1">Volume: </label>
-        <input type="range" id="volume1" value="50" min="0" max="100" step="1" oninput="updateVolumeValue(1)">
-        <span id="volumeValue1">50</span>
-
+        <input type="range" id="volume1" value="33" min="0" max="100" step="1" oninput="updateVolumeValue(1)" width="50vw">
+        <span id="volumeValue1">33</span>
         <br>
+
         <button onclick="toggleTone(1)" id="toggleButton1">Play Tone</button>
-        <span id="statusIcon1" class="status-icon" >⏹️</span>
 
     </div>
 
@@ -53,7 +159,26 @@
         <button onclick="addSound(3)">Add Sound 3</button>
     </div>
 
-    <script>
+
+    <hr>
+
+    <!-- make this a button -->
+    <button onclick="handleMatchClick()" style="background-color: green;">
+        Step 1: Click Here if sound now matches what you hear
+    </button>
+    <br>
+    <!-- add a text box -->
+    <input type="text" id="tinnitusMatch" placeholder="Enter your tinnitus frequency here" style="width: 50%; margin-top: 10px; padding: 5px;">
+
+    <br> <div class="box"></div><br>
+
+    <hr>
+    <button style="background-color: white; color: black; border: 3px solid black; border-radius: 8px; cursor: not-allowed; ">
+        Step 2: Follow the questionaire below to complete the survey.
+    </button>
+
+    <script type="text/javascript" src="./helper.js"></script>
+    <script> 
         let audioCtx1, oscillator1, gainNode1;
         let audioCtx2, oscillator2, gainNode2;
         let audioCtx3, oscillator3, gainNode3;
@@ -102,13 +227,10 @@
 
         function toggleTone(sound) {
             if (sound === 1) {
-                if (isPlaying1) {
-                    stopTone(1);
-                } else {
-                    playTone(1);
-                }
+                if (isPlaying1)     stopTone(1);
+                else                playTone(1);
                 isPlaying1 = !isPlaying1;
-                document.getElementById("toggleButton1").textContent = isPlaying1 ? "Stop Tone" : "Play Tone";
+                document.getElementById("toggleButton1").textContent = isPlaying1 ? "Stop Tone ⏹️" : "Play Tone";
             } else if (sound === 2) {
                 if (isPlaying2) {
                     stopTone(2);
@@ -116,7 +238,7 @@
                     playTone(2);
                 }
                 isPlaying2 = !isPlaying2;
-                document.getElementById("toggleButton2").textContent = isPlaying2 ? "Stop Tone" : "Play Tone";
+                document.getElementById("toggleButton2").textContent = isPlaying2 ? "Stop Tone ⏹️" : "Play Tone";
             } else if (sound === 3) {
                 if (isPlaying3) {
                     stopTone(3);
@@ -124,7 +246,7 @@
                     playTone(3);
                 }
                 isPlaying3 = !isPlaying3;
-                document.getElementById("toggleButton3").textContent = isPlaying3 ? "Stop Tone" : "Play Tone";
+                document.getElementById("toggleButton3").textContent = isPlaying3 ? "Stop Tone ⏹️" : "Play Tone";
             }
         }
 
@@ -148,7 +270,6 @@
                 oscillator1.connect(gainNode1);
                 gainNode1.connect(audioCtx1.destination);
                 oscillator1.start();
-                document.getElementById("statusIcon1").textContent = "▶️";
             } else if (sound === 2) {
                 if (audioCtx2) {
                     audioCtx2.close();
@@ -168,7 +289,6 @@
                 oscillator2.connect(gainNode2);
                 gainNode2.connect(audioCtx2.destination);
                 oscillator2.start();
-                document.getElementById("statusIcon2").textContent = "▶️";
             } else if (sound === 3) {
                 if (audioCtx3) {
                     audioCtx3.close();
@@ -188,7 +308,6 @@
                 oscillator3.connect(gainNode3);
                 gainNode3.connect(audioCtx3.destination);
                 oscillator3.start();
-                document.getElementById("statusIcon3").textContent = "▶️";
             }
         }
 
@@ -198,73 +317,63 @@
                 audioCtx1.close();
                 oscillator1 = null;
                 audioCtx1 = null;
-                document.getElementById("statusIcon1").textContent = "⏹️";
             } else if (sound === 2 && oscillator2) {
                 oscillator2.stop();
                 audioCtx2.close();
                 oscillator2 = null;
                 audioCtx2 = null;
-                document.getElementById("statusIcon2").textContent = "⏹️";
             } else if (sound === 3 && oscillator3) {
                 oscillator3.stop();
                 audioCtx3.close();
                 oscillator3 = null;
                 audioCtx3 = null;
-                document.getElementById("statusIcon3").textContent = "⏹️";
             }
         }
 
         function addSound(sound) {
+            const soundHTML = `
+                <h2>Sound ${sound}</h2>
+                <label for="waveform${sound}">Waveform: </label>
+                <select id="waveform${sound}" onchange="updateWaveform(${sound})">
+                    <option value="sine">Sine</option>
+                    <option value="square">Square</option>
+                    <option value="triangle">Triangle</option>
+                    <option value="sawtooth">Sawtooth</option>
+                </select>
+
+                <label for="frequency${sound}">Frequency (Hz): </label>
+                <span id="frequencyValue${sound}">440</span><br>
+                <input type="range" id="frequency${sound}" value="440" min="10" max="14000" step="10" oninput="updateFrequencyValue(${sound})">
+                
+                <label for="volume${sound}">Volume: </label>
+                <input type="range" id="volume${sound}" value="33" min="0" max="100" step="1" oninput="updateVolumeValue(${sound})">
+                <span id="volumeValue${sound}">33</span>
+
+                <br>
+                <button onclick="toggleTone(${sound})" id="toggleButton${sound}">Play Tone</button>
+            `;
+
             if (sound === 2) {
-                document.getElementById('addSound2').innerHTML = `
-                    <h2>Sound 2</h2>
-                    <label for="frequency2">Frequency (Hz): </label>
-                    <input type="range" id="frequency2" value="440" min="10" max="14000" step="10" oninput="updateFrequencyValue(2)">
-                    <span id="frequencyValue2">440</span><br>
-                    
-                    <label for="waveform2">Waveform: </label>
-                    <select id="waveform2" onchange="updateWaveform(2)">
-                        <option value="sine">Sine</option>
-                        <option value="square">Square</option>
-                        <option value="triangle">Triangle</option>
-                        <option value="sawtooth">Sawtooth</option>
-                    </select>
-
-                    <br>
-                    <label for="volume2">Volume: </label>
-                    <input type="range" id="volume2" value="50" min="0" max="100" step="1" oninput="updateVolumeValue(2)">
-                    <span id="volumeValue2">50</span>
-
-                    <br>
-                    <button onclick="toggleTone(2)" id="toggleButton2">Play Tone</button>
-                    <span id="statusIcon2" class="status-icon">⏹️</span>
-                `;
+                document.getElementById('addSound2').innerHTML = soundHTML;
             } else if (sound === 3) {
-                document.getElementById('addSound3').innerHTML = `
-                    <h2>Sound 3</h2>
-                    <label for="frequency3">Frequency (Hz): </label>
-                    <input type="range" id="frequency3" value="440" min="10" max="14000" step="10" oninput="updateFrequencyValue(3)">
-                    <span id="frequencyValue3">440</span><br>
-                    
-                    <label for="waveform3">Waveform: </label>
-                    <select id="waveform3" onchange="updateWaveform(3)">
-                        <option value="sine">Sine</option>
-                        <option value="square">Square</option>
-                        <option value="triangle">Triangle</option>
-                        <option value="sawtooth">Sawtooth</option>
-                    </select>
-
-                    <br>
-                    <label for="volume3">Volume: </label>
-                    <input type="range" id="volume3" value="50" min="0" max="100" step="1" oninput="updateVolumeValue(3)">
-                    <span id="volumeValue3">50</span>
-
-                    <br>
-                    <button onclick="toggleTone(3)" id="toggleButton3">Play Tone</button>
-                    <span id="statusIcon3" class="status-icon">⏹️</span>
-                `;
+                document.getElementById('addSound3').innerHTML = soundHTML;
             }
         }
+
+        function closeModal() {
+            document.getElementById('infoModal').style.display = 'none';
+        }
+
+        function startCalibration() {
+            // Add your calibration process here
+            closeModal();
+        }
+
+        function handleMatchClick() {
+            alert("Thank you for your feedback!");
+            // Add any additional logic you need here
+        }
+
     </script>
 
 </body>
