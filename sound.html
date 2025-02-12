@@ -83,8 +83,9 @@
             <button style="background-color: white; color: black; border: 3px solid black; border-radius: 8px; cursor: not-allowed;">
                 Step 2: Follow the questionnaire below to complete the survey.
             </button>
+            <br> <div class="box"></div><br> Please select New Draft when this window refreshes. 
             <br> <div class="box"></div><br>
-            <iframe width="640px" height="20000vh" src="https://forms.office.com/Pages/ResponsePage.aspx?id=I_FR8s7JjkSSdzS7KFkR2QlLtcyM--1KpijKKDu9H1xUMjFYMkNKRzBRVTBBQzlVWEtFUE4xNTZKNC4u&embed=true" frameborder="0" marginwidth="0" marginheight="0" style="border: none; max-width:100%; max-height:100vh" allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen></iframe>
+            <iframe width="640px" height="20000vh" src="https://forms.office.com/Pages/ResponsePage.aspx?id=I_FR8s7JjkSSdzS7KFkR2QlLtcyM--1KpijKKDu9H1xUMjFYMkNKRzBRVTBBQzlVWEtFUE4xNTZKNC4u&r0220ae0aef3c4e19a6d60821a4518951=placeholder&embed=true" frameborder="0" marginwidth="0" marginheight="0" style="border: none; max-width:100%; max-height:100vh" allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen></iframe>
         </div>
     </div>
 
@@ -272,8 +273,7 @@
 
                 <br>
                 <button onclick="toggleTone(${sound})" id="toggleButton${sound}">Play Tone</button>
-                <br>
-
+                
                 <br> <div class="box"></div><br>
 
                 <!-- Selectable Images -->
@@ -359,20 +359,32 @@
                 }
             }
 
-            const soundConfigurationsJSON = JSON.stringify(soundConfigurations, null, 2);
-            console.log(soundConfigurationsJSON);
+            // Convert soundConfigurations to CSV
+            const csvHeader = "sound,frequency,waveform,volume,isPlaying,ear\n";
+            const csvRows = soundConfigurations.map(config => 
+                `${config.sound},${config.frequency},${config.waveform},${config.volume},${config.isPlaying},${config.ear}`
+            );
+            const csvString = csvHeader + csvRows.join("\n");
+            console.log(csvString);
 
-            // Set the value of the text box with the JSON string
-            document.getElementById('tinnitusMatch').value = soundConfigurationsJSON;
+            // Set the value of the text box with the CSV string
+            document.getElementById('tinnitusMatch').value = csvString;
 
-            // Copy the JSON string to the clipboard
-            navigator.clipboard.writeText(soundConfigurationsJSON).then(() => {
-                alert("Text copied! Please paste it into the first blank of the questionnaire in step 2.");
+            // Update the iframe src with the CSV string
+            const iframe = document.querySelector('iframe');
+            const baseUrl = "https://forms.office.com/Pages/ResponsePage.aspx?id=I_FR8s7JjkSSdzS7KFkR2QlLtcyM--1KpijKKDu9H1xUMjFYMkNKRzBRVTBBQzlVWEtFUE4xNTZKNC4u&r0220ae0aef3c4e19a6d60821a4518951=";
+            iframe.src = `${baseUrl}${encodeURIComponent(csvString)}&embed=true`;
+
+            // Copy the CSV string to the clipboard
+            navigator.clipboard.writeText(csvString).then(() => {
+                // alert("Text copied! Please paste it into the first blank of the questionnaire in step 2.");
             }).catch(err => {
-                alert("Please copy-paste it into the first blank of the questionnaire in step 2.");
+                // alert("Please copy-paste it into the first blank of the questionnaire in step 2.");
             });
         }
 
     </script>
 </body>
 </html>
+
+
