@@ -139,23 +139,32 @@
 
         function toggleTone(sound) {
             if (sound === 1) {
-                if (isPlaying1)     stopTone(1);
-                else                playTone(1);
+                if (isPlaying1) {
+                    stopTone(1);
+                    document.getElementById("toggleButton1").style.backgroundColor = ""; // Reset to original color
+                } else {
+                    playTone(1);
+                    document.getElementById("toggleButton1").style.backgroundColor = "red"; // Change to red
+                }
                 isPlaying1 = !isPlaying1;
                 document.getElementById("toggleButton1").textContent = isPlaying1 ? "Stop Tone ⏹️" : "Play Tone";
             } else if (sound === 2) {
                 if (isPlaying2) {
                     stopTone(2);
+                    document.getElementById("toggleButton2").style.backgroundColor = ""; // Reset to original color
                 } else {
                     playTone(2);
+                    document.getElementById("toggleButton2").style.backgroundColor = "red"; // Change to red
                 }
                 isPlaying2 = !isPlaying2;
                 document.getElementById("toggleButton2").textContent = isPlaying2 ? "Stop Tone ⏹️" : "Play Tone";
             } else if (sound === 3) {
                 if (isPlaying3) {
                     stopTone(3);
+                    document.getElementById("toggleButton3").style.backgroundColor = ""; // Reset to original color
                 } else {
                     playTone(3);
+                    document.getElementById("toggleButton3").style.backgroundColor = "red"; // Change to red
                 }
                 isPlaying3 = !isPlaying3;
                 document.getElementById("toggleButton3").textContent = isPlaying3 ? "Stop Tone ⏹️" : "Play Tone";
@@ -169,6 +178,9 @@
             document.getElementById("toggleButton1").textContent = "Play Tone";
             document.getElementById("toggleButton2").textContent = "Play Tone";
             document.getElementById("toggleButton3").textContent = "Play Tone";
+            document.getElementById("toggleButton1").style.backgroundColor = "";
+            document.getElementById("toggleButton2").style.backgroundColor = "";
+            document.getElementById("toggleButton3").style.backgroundColor = "";
         }
 
         function playTone(sound) {
