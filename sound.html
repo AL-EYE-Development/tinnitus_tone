@@ -396,7 +396,178 @@
         }
 
     </script>
+
+    <!-- noise test -->
+    <br>
+    <hr>
+    <br>    
+    <h1>Noise Test</h1>
+    <label for="frequency">1/6 octave centered around Frequency (Hz): </label>
+    <span id="frequencyValue">1000</span><br>
+    <input type="range" id="frequency" class="slider" value="1000" min="10" max="14000" step="10" oninput="updateFrequency()">
+    <br>
+    <button onclick="toggleNoise()" id="toggleButton">Play Noise</button>
+
+    <br><br><br>
+    <div>
+        <button onclick="toggleSpecificNoise('white')" id="whiteNoiseButton">Play White Noise</button>
+        <button onclick="toggleSpecificNoise('brown')" id="brownNoiseButton">Play Brown Noise</button>
+        <button onclick="toggleSpecificNoise('pink')" id="pinkNoiseButton">Play Pink Noise</button>
+        <button onclick="toggleSpecificNoise('blue')" id="blueNoiseButton">Play Blue Noise</button>
+    </div>
+
+
+    <script>
+        let audioCtx, noiseSource, highpassFilter, lowpassFilter;
+        let isPlaying = false;
+        let specificNoiseSource = null;
+    
+        function generateWhiteNoise(audioCtx) {
+            const bufferSize = 2 * audioCtx.sampleRate; // 2 seconds of noise
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+    
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1; // White noise in range [-1,1]
+            }
+    
+            return noiseBuffer;
+        }
+    
+        function generateBrownNoise(audioCtx) {
+            const bufferSize = 2 * audioCtx.sampleRate;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            let lastOut = 0.0;
+    
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                output[i] = (lastOut + (0.02 * white)) / 1.02;
+                lastOut = output[i];
+                output[i] *= 3.5; // (roughly) compensate for gain
+            }
+    
+            return noiseBuffer;
+        }
+    
+        function generatePinkNoise(audioCtx) {
+            const bufferSize = 2 * audioCtx.sampleRate;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            let b0, b1, b2, b3, b4, b5, b6;
+            b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
+    
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                b0 = 0.99886 * b0 + white * 0.0555179;
+                b1 = 0.99332 * b1 + white * 0.0750759;
+                b2 = 0.96900 * b2 + white * 0.1538520;
+                b3 = 0.86650 * b3 + white * 0.3104856;
+                b4 = 0.55000 * b4 + white * 0.5329522;
+                b5 = -0.7616 * b5 - white * 0.0168980;
+                output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                output[i] *= 0.11; // (roughly) compensate for gain
+                b6 = white * 0.115926;
+            }
+    
+            return noiseBuffer;
+        }
+    
+        function generateBlueNoise(audioCtx) {
+            const bufferSize = 2 * audioCtx.sampleRate;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            let lastOut = 0.0;
+    
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                output[i] = (lastOut + (0.02 * white)) / 1.02;
+                lastOut = output[i];
+                output[i] *= 3.5; // (roughly) compensate for gain
+            }
+    
+            return noiseBuffer;
+        }
+    
+        function updateFrequency() {
+            const freq = document.getElementById("frequency").value;
+            document.getElementById("frequencyValue").textContent = freq;
+    
+            if (isPlaying) {
+                const f_low = freq / Math.pow(2, 1/6);
+                const f_high = freq * Math.pow(2, 1/6);
+    
+                if (highpassFilter) {
+                    highpassFilter.frequency.value = f_low;
+                }
+                if (lowpassFilter) {
+                    lowpassFilter.frequency.value = f_high;
+                }
+            }
+        }
+    
+        function toggleNoise() {
+            if (isPlaying) {
+                noiseSource.stop();
+                noiseSource = null;
+                document.getElementById("toggleButton").textContent = "Play Noise";
+            } else {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                noiseSource = audioCtx.createBufferSource();
+                noiseSource.buffer = generateWhiteNoise(audioCtx);
+                noiseSource.loop = true;
+    
+                const freq = document.getElementById("frequency").value;
+                const f_low = freq / Math.pow(2, 1/6);
+                const f_high = freq * Math.pow(2, 1/6);
+    
+                highpassFilter = audioCtx.createBiquadFilter();
+                highpassFilter.type = "highpass";
+                highpassFilter.frequency.value = f_low;
+                highpassFilter.Q.value = 1;
+    
+                lowpassFilter = audioCtx.createBiquadFilter();
+                lowpassFilter.type = "lowpass";
+                lowpassFilter.frequency.value = f_high;
+                lowpassFilter.Q.value = 1;
+    
+                noiseSource.connect(highpassFilter);
+                highpassFilter.connect(lowpassFilter);
+                lowpassFilter.connect(audioCtx.destination);
+    
+                noiseSource.start();
+                document.getElementById("toggleButton").textContent = "Stop Noise";
+            }
+            isPlaying = !isPlaying;
+        }
+    
+        function toggleSpecificNoise(type) {
+            if (specificNoiseSource) {
+                specificNoiseSource.stop();
+                specificNoiseSource = null;
+                document.getElementById(`${type}NoiseButton`).textContent = `Play ${type.charAt(0).toUpperCase() + type.slice(1)} Noise`;
+            } else {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                specificNoiseSource = audioCtx.createBufferSource();
+    
+                if (type === 'white') {
+                    specificNoiseSource.buffer = generateWhiteNoise(audioCtx);
+                } else if (type === 'brown') {
+                    specificNoiseSource.buffer = generateBrownNoise(audioCtx);
+                } else if (type === 'pink') {
+                    specificNoiseSource.buffer = generatePinkNoise(audioCtx);
+                } else if (type === 'blue') {
+                    specificNoiseSource.buffer = generateBlueNoise(audioCtx);
+                }
+    
+                specificNoiseSource.loop = true;
+                specificNoiseSource.connect(audioCtx.destination);
+                specificNoiseSource.start();
+                document.getElementById(`${type}NoiseButton`).textContent = `Stop ${type.charAt(0).toUpperCase() + type.slice(1)} Noise`;
+            }
+        }
+    </script>
+
+
 </body>
 </html>
-
-
