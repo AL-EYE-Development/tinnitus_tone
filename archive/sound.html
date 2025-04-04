@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tone Generator Survey</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <!-- https://www.dhiwise.com/post/display-code-snippets-with-an-html-code-block -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/themes/prism.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/prism.min.js"></script>
+</head>
+
+<body>
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Information Notice</h2>
+            <p>Please read the following information before proceeding.</p>
+            <button onclick="startCalibration()">Start Calibration</button>
+        </div>
+    </div>
+
+    <!-- noise test -->
+    <br>
+    <br>
+    <h1>Noise Test</h1>
+    <b> ⚠️ OBS for developing phase: turn down your device volume</b> 
+
+    <br><br><br><br>
+    <label for="frequency">Central Frequency (Hz): </label>
+    <span id="frequencyValue">1000</span><br>
+    <input type="range" style="width: 45vw;" id="frequency" class="slider" value="1000" min="10" max="14000" step="10" oninput="updateFrequency()"> 
+    <br>
+    <label for="Center frequency around 1/x of an octave">Fraction: </label>
+    <span id="fractionValue">6</span><br>
+    <input type="range" style="width: 45vw;" id="fraction" class="slider" value="6" min="1" max="10" step="1" oninput="updateFraction()">
+    <br>
+    <button onclick="toggleNoise()" id="toggleButton">Play Noise</button>
+
+    <br><br>
+    <details>
+        <summary>More Information on frequency implementation</summary>
+        <pre><code style="width: 66vw;" class="language-matlab">
+            % This is the matlab code from Mie to give either pure tone or narrowband noise 
+            if strcmp(cfg.stim_type, 'tone')
+                stim = sin(2*pi*f*(0:(1/fs):duration))';
+                stim = stim(1:end-1);
+            elseif strcmp(cfg.stim_type, 'nb_noise')
+                f_low = f/(2^(1/6));
+                f_high = f*(2^(1/6));
+                stim = real(ifft(scut(fft(randn(round(fs * duration),1)), f_low, f_high, fs)));
+            end
+        </code></pre>
+
+        <pre><code style="width: 66vw;" class="language-javascript">
+            // this is the web code;
+            // This snippet generates white noise and applies a bandpass filter to create narrowband noise
+            // The frequency is set by the user and the fraction determines that bandwidth of an octave
+            noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = generateWhiteNoise(audioCtx);
+
+            const f_low = freq / Math.pow(2, 1 / fraction);
+            const f_high = freq * Math.pow(2, 1 / fraction);
+            
+            highpassFilter = audioCtx.createBiquadFilter();
+            highpassFilter.type = "highpass";
+            highpassFilter.frequency.value = f_low;
+            highpassFilter.Q.value = 1;
+
+            lowpassFilter = audioCtx.createBiquadFilter();
+            lowpassFilter.type = "lowpass";
+            lowpassFilter.frequency.value = f_high;
+            lowpassFilter.Q.value = 1;
+
+            noiseSource.connect(highpassFilter);
+            highpassFilter.connect(lowpassFilter);
+            lowpassFilter.connect(audioCtx.destination);
+
+            noiseSource.start();
+        </code></pre>
+    </details>
+    <br><br>
+
+    <div>
+        <button onclick="toggleSpecificNoise('white')" id="whiteNoiseButton">Play White Noise</button>
+        <button onclick="toggleSpecificNoise('brown')" id="brownNoiseButton">Play Brown Noise</button>
+        <button onclick="toggleSpecificNoise('pink')" id="pinkNoiseButton">Play Pink Noise</button>
+        <button onclick="toggleSpecificNoise('blue')" id="blueNoiseButton">Play Blue Noise</button>
+    </div>
+
+    <br>
+    <hr>
+    <br>
+
+    <script>
+        let audioCtx, noiseSource, highpassFilter, lowpassFilter, fraction;
+        let isPlaying = false;
+        let specificNoiseSource = null;
+
+        function generateWhiteNoise(audioCtx) {
+            const bufferSize = 2 * audioCtx.sampleRate; // 2 seconds of noise
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1; // White noise in range [-1,1]
+            }
+
+            return noiseBuffer;
+        }
+
+        function generateBrownNoise(audioCtx) {
+            const bufferSize = 2 * audioCtx.sampleRate;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            let lastOut = 0.0;
+
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                output[i] = (lastOut + (0.02 * white)) / 1.02;
+                lastOut = output[i];
+                output[i] *= 3.5; // (roughly) compensate for gain
+            }
+
+            return noiseBuffer;
+        }
+
+        function generatePinkNoise(audioCtx) {
+            const bufferSize = 2 * audioCtx.sampleRate;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            let b0, b1, b2, b3, b4, b5, b6;
+            b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
+
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                b0 = 0.99886 * b0 + white * 0.0555179;
+                b1 = 0.99332 * b1 + white * 0.0750759;
+                b2 = 0.96900 * b2 + white * 0.1538520;
+                b3 = 0.86650 * b3 + white * 0.3104856;
+                b4 = 0.55000 * b4 + white * 0.5329522;
+                b5 = -0.7616 * b5 - white * 0.0168980;
+                output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                output[i] *= 0.11; // (roughly) compensate for gain
+                b6 = white * 0.115926;
+            }
+
+            return noiseBuffer;
+        }
+
+        function generateBlueNoise(audioCtx) {
+            const bufferSize = 2 * audioCtx.sampleRate;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            let lastOut = 0.0;
+
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                output[i] = (lastOut + (0.02 * white)) / 1.02;
+                lastOut = output[i];
+                output[i] *= 3.5; // (roughly) compensate for gain
+            }
+
+            return noiseBuffer;
+        }
+
+        function updateFrequency() {
+            const freq = document.getElementById("frequency").value;
+            document.getElementById("frequencyValue").textContent = freq;
+
+            if (isPlaying) {
+                fraction = document.getElementById("fraction").value;
+                const f_low = freq / Math.pow(2, 1 / fraction);
+                const f_high = freq * Math.pow(2, 1 / fraction);
+
+                if (highpassFilter) {
+                    highpassFilter.frequency.value = f_low;
+                }
+                if (lowpassFilter) {
+                    lowpassFilter.frequency.value = f_high;
+                }
+            }
+        }
+
+        function updateFraction() {
+            fraction = document.getElementById("fraction").value;
+            document.getElementById("fractionValue").textContent = fraction;
+
+            if (isPlaying) {
+                updateFrequency();
+            }
+        }
+
+        function toggleNoise() {
+            if (isPlaying) {
+                noiseSource.stop();
+                noiseSource = null;
+                document.getElementById("toggleButton").textContent = "Play Noise";
+            } else {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                noiseSource = audioCtx.createBufferSource();
+                noiseSource.buffer = generateWhiteNoise(audioCtx);
+                noiseSource.loop = true;
+
+                fraction = document.getElementById("fraction").value;
+                const freq = document.getElementById("frequency").value;
+                const f_low = freq / Math.pow(2, 1 / fraction);
+                const f_high = freq * Math.pow(2, 1 / fraction);
+                
+                highpassFilter = audioCtx.createBiquadFilter();
+                highpassFilter.type = "highpass";
+                highpassFilter.frequency.value = f_low;
+                highpassFilter.Q.value = 1;
+
+                lowpassFilter = audioCtx.createBiquadFilter();
+                lowpassFilter.type = "lowpass";
+                lowpassFilter.frequency.value = f_high;
+                lowpassFilter.Q.value = 1;
+
+                noiseSource.connect(highpassFilter);
+                highpassFilter.connect(lowpassFilter);
+                lowpassFilter.connect(audioCtx.destination);
+
+                noiseSource.start();
+                document.getElementById("toggleButton").textContent = "Stop Noise";
+            }
+            isPlaying = !isPlaying;
+        }
+
+        function toggleSpecificNoise(type) {
+            if (specificNoiseSource) {
+                specificNoiseSource.stop();
+                specificNoiseSource = null;
+                document.getElementById(`${type}NoiseButton`).textContent = `Play ${type.charAt(0).toUpperCase() + type.slice(1)} Noise`;
+            } else {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                specificNoiseSource = audioCtx.createBufferSource();
+
+                if (type === 'white') {
+                    specificNoiseSource.buffer = generateWhiteNoise(audioCtx);
+                } else if (type === 'brown') {
+                    specificNoiseSource.buffer = generateBrownNoise(audioCtx);
+                } else if (type === 'pink') {
+                    specificNoiseSource.buffer = generatePinkNoise(audioCtx);
+                } else if (type === 'blue') {
+                    specificNoiseSource.buffer = generateBlueNoise(audioCtx);
+                }
+
+                specificNoiseSource.loop = true;
+                specificNoiseSource.connect(audioCtx.destination);
+                specificNoiseSource.start();
+                document.getElementById(`${type}NoiseButton`).textContent = `Stop ${type.charAt(0).toUpperCase() + type.slice(1)} Noise`;
+            }
+        }
+    </script>
+
+
+
+    <h1>Tone Generator & Tinnitus Matching (Developing)</h1>
+
+    <!-- Pause All Tones button -->
+    <button onclick="pauseAllTones()" style="background-color: #2f2f2f;">Pause All Tones</button>
+    <br>
+
+    <div class="column" id="sound1">
+        <h2>Sound 1</h2>
+
+        <label for="waveform1">Waveform: </label>
+        <select id="waveform1" onchange="updateWaveform(1)">
+            <option value="sine">Sine</option>
+            <option value="square">Square</option>
+            <option value="triangle">Triangle</option>
+            <option value="sawtooth">Sawtooth</option>
+        </select>
+
+        <label for="frequency1">Frequency (Hz): </label>
+        <span id="frequencyValue1"> 440 Hz - </span><br>
+        <input type="range" id="frequency1" value="440" min="10" max="14000" step="10"
+            oninput="updateFrequencyValue(1)">
+
+        <br>
+        <label for="volume1">Volume: </label>
+        <input type="range" id="volume1" value="33" min="0" max="100" step="1" oninput="updateVolumeValue(1)"
+            width="50vw">
+        <span id="volumeValue1">33</span>
+        <br>
+
+        <button onclick="toggleTone(1)" id="toggleButton1">Play Tone</button>
+
+        <br>
+        <div class="box"></div><br>
+
+        <img src="./res/ear_left.png" id="earLeft1" class="selectable-image selected"
+            onclick="selectImage('earLeft1', 1)">
+        &nbsp;&nbsp;&nbsp;
+        <img src="./res/ear_right.png" id="earRight1" class="selectable-image" onclick="selectImage('earRight1', 1)">
+
+
+    </div>
+
+    <div class="column" id="addSound2">
+        <button onclick="addSound(2)">Add Sound 2</button>
+    </div>
+
+    <div class="column" id="addSound3">
+        <button onclick="addSound(3)">Add Sound 3</button>
+    </div>
+
+
+    <hr>
+
+    <div class="row">
+        <div class="column-left">
+            <!-- Step 1 -->
+            <button onclick="handleMatchClick()" style="background-color: green;">
+                Step 1: Click Here if sound now matches what you hear
+            </button>
+            <br>
+            <div class="box"></div><br>
+            <!-- Textarea for JSON output -->
+            <textarea id="tinnitusMatch"
+                placeholder="Your tinnitus frequency information will be here after button clicking"
+                style="width: 100%; height: 10vh; margin-top: 10px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; resize: none; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);"></textarea>
+        </div>
+        <div class="column-right">
+            <!-- Step 2 -->
+            <button
+                style="background-color: white; color: black; border: 3px solid black; border-radius: 8px; cursor: not-allowed;">
+                Step 2: Follow the questionnaire below to complete the survey.
+            </button>
+            <br>
+            <div class="box"></div><br> Please select New Draft when this window refreshes.
+            <br>
+            <div class="box"></div><br>
+            <iframe width="640px" height="20000vh"
+                src="https://forms.office.com/Pages/ResponsePage.aspx?id=I_FR8s7JjkSSdzS7KFkR2QlLtcyM--1KpijKKDu9H1xUMjFYMkNKRzBRVTBBQzlVWEtFUE4xNTZKNC4u&r0220ae0aef3c4e19a6d60821a4518951=placeholder&embed=true"
+                frameborder="0" marginwidth="0" marginheight="0" style="border: none; max-width:100%; max-height:100vh"
+                allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="./helper.js"></script>
+    <script>
+        let audioCtx1, oscillator1, gainNode1;
+        let audioCtx2, oscillator2, gainNode2;
+        let audioCtx3, oscillator3, gainNode3;
+        let isPlaying1 = false;
+        let isPlaying2 = false;
+        let isPlaying3 = false;
+
+        function updateFrequencyValue(sound) {
+            const freq = document.getElementById(`frequency${sound}`).value;
+            document.getElementById(`frequencyValue${sound}`).textContent = freq;
+            if (sound === 1 && oscillator1) {
+                oscillator1.frequency.setValueAtTime(freq, audioCtx1.currentTime);
+            } else if (sound === 2 && oscillator2) {
+                oscillator2.frequency.setValueAtTime(freq, audioCtx2.currentTime);
+            } else if (sound === 3 && oscillator3) {
+                oscillator3.frequency.setValueAtTime(freq, audioCtx3.currentTime);
+            }
+
+            //print type of freq
+            const note = getNoteFromFrequency(parseFloat(freq));
+            document.getElementById(`frequencyValue${sound}`).textContent = `${freq} Hz ~${note}`;
+        }
+
+        function updateWaveform(sound) {
+            const wave = document.getElementById(`waveform${sound}`).value;
+            if (sound === 1 && oscillator1) {
+                oscillator1.type = wave;
+            } else if (sound === 2 && oscillator2) {
+                oscillator2.type = wave;
+            } else if (sound === 3 && oscillator3) {
+                oscillator3.type = wave;
+            }
+        }
+
+        function updateVolumeValue(sound) {
+            const volume = document.getElementById(`volume${sound}`).value;
+            document.getElementById(`volumeValue${sound}`).textContent = volume;
+            if (sound === 1 && gainNode1) {
+                gainNode1.gain.setValueAtTime(volume / 100, audioCtx1.currentTime);
+            } else if (sound === 2 && gainNode2) {
+                gainNode2.gain.setValueAtTime(volume / 100, audioCtx2.currentTime);
+            } else if (sound === 3 && gainNode3) {
+                gainNode3.gain.setValueAtTime(volume / 100, audioCtx3.currentTime);
+            }
+        }
+
+        function toggleTone(sound) {
+            if (sound === 1) {
+                if (isPlaying1) {
+                    stopTone(1);
+                    document.getElementById("toggleButton1").style.backgroundColor = ""; // Reset to original color
+                } else {
+                    playTone(1);
+                    document.getElementById("toggleButton1").style.backgroundColor = "red"; // Change to red
+                }
+                isPlaying1 = !isPlaying1;
+                document.getElementById("toggleButton1").textContent = isPlaying1 ? "Stop Tone ⏹️" : "Play Tone";
+            } else if (sound === 2) {
+                if (isPlaying2) {
+                    stopTone(2);
+                    document.getElementById("toggleButton2").style.backgroundColor = ""; // Reset to original color
+                } else {
+                    playTone(2);
+                    document.getElementById("toggleButton2").style.backgroundColor = "red"; // Change to red
+                }
+                isPlaying2 = !isPlaying2;
+                document.getElementById("toggleButton2").textContent = isPlaying2 ? "Stop Tone ⏹️" : "Play Tone";
+            } else if (sound === 3) {
+                if (isPlaying3) {
+                    stopTone(3);
+                    document.getElementById("toggleButton3").style.backgroundColor = ""; // Reset to original color
+                } else {
+                    playTone(3);
+                    document.getElementById("toggleButton3").style.backgroundColor = "red"; // Change to red
+                }
+                isPlaying3 = !isPlaying3;
+                document.getElementById("toggleButton3").textContent = isPlaying3 ? "Stop Tone ⏹️" : "Play Tone";
+            }
+        }
+
+        function pauseAllTones() {
+            stopTone(1);
+            stopTone(2);
+            stopTone(3);
+            document.getElementById("toggleButton1").textContent = "Play Tone";
+            document.getElementById("toggleButton2").textContent = "Play Tone";
+            document.getElementById("toggleButton3").textContent = "Play Tone";
+            document.getElementById("toggleButton1").style.backgroundColor = "";
+            document.getElementById("toggleButton2").style.backgroundColor = "";
+            document.getElementById("toggleButton3").style.backgroundColor = "";
+        }
+
+        function playTone(sound) {
+            if (sound === 1) {
+                if (audioCtx1) {
+                    audioCtx1.close();
+                }
+                const freq = document.getElementById("frequency1").value;
+                const wave = document.getElementById("waveform1").value;
+                const volume = document.getElementById("volume1").value;
+
+                audioCtx1 = new (window.AudioContext || window.webkitAudioContext)();
+                oscillator1 = audioCtx1.createOscillator();
+                gainNode1 = audioCtx1.createGain();
+
+                oscillator1.type = wave;
+                oscillator1.frequency.setValueAtTime(freq, audioCtx1.currentTime);
+                gainNode1.gain.setValueAtTime(volume / 100, audioCtx1.currentTime);
+
+                oscillator1.connect(gainNode1);
+                gainNode1.connect(audioCtx1.destination);
+                oscillator1.start();
+            } else if (sound === 2) {
+                if (audioCtx2) {
+                    audioCtx2.close();
+                }
+                const freq = document.getElementById("frequency2").value;
+                const wave = document.getElementById("waveform2").value;
+                const volume = document.getElementById("volume2").value;
+
+                audioCtx2 = new (window.AudioContext || window.webkitAudioContext)();
+                oscillator2 = audioCtx2.createOscillator();
+                gainNode2 = audioCtx2.createGain();
+
+                oscillator2.type = wave;
+                oscillator2.frequency.setValueAtTime(freq, audioCtx2.currentTime);
+                gainNode2.gain.setValueAtTime(volume / 100, audioCtx2.currentTime);
+
+                oscillator2.connect(gainNode2);
+                gainNode2.connect(audioCtx2.destination);
+                oscillator2.start();
+            } else if (sound === 3) {
+                if (audioCtx3) {
+                    audioCtx3.close();
+                }
+                const freq = document.getElementById("frequency3").value;
+                const wave = document.getElementById("waveform3").value;
+                const volume = document.getElementById("volume3").value;
+
+                audioCtx3 = new (window.AudioContext || window.webkitAudioContext)();
+                oscillator3 = audioCtx3.createOscillator();
+                gainNode3 = audioCtx3.createGain();
+
+                oscillator3.type = wave;
+                oscillator3.frequency.setValueAtTime(freq, audioCtx3.currentTime);
+                gainNode3.gain.setValueAtTime(volume / 100, audioCtx3.currentTime);
+
+                oscillator3.connect(gainNode3);
+                gainNode3.connect(audioCtx3.destination);
+                oscillator3.start();
+            }
+        }
+
+        function stopTone(sound) {
+            if (sound === 1 && oscillator1) {
+                oscillator1.stop();
+                audioCtx1.close();
+                oscillator1 = null;
+                audioCtx1 = null;
+            } else if (sound === 2 && oscillator2) {
+                oscillator2.stop();
+                audioCtx2.close();
+                oscillator2 = null;
+                audioCtx2 = null;
+            } else if (sound === 3 && oscillator3) {
+                oscillator3.stop();
+                audioCtx3.close();
+                oscillator3 = null;
+                audioCtx3 = null;
+            }
+        }
+
+        function addSound(sound) {
+            const soundHTML = `
+                <h2>Sound ${sound}</h2>
+                <label for="waveform${sound}">Waveform: </label>
+                <select id="waveform${sound}" onchange="updateWaveform(${sound})">
+                    <option value="sine">Sine</option>
+                    <option value="square">Square</option>
+                    <option value="triangle">Triangle</option>
+                    <option value="sawtooth">Sawtooth</option>
+                </select>
+
+                <label for="frequency${sound}">Frequency (Hz): </label>
+                <span id="frequencyValue${sound}">440</span><br>
+                <input type="range" id="frequency${sound}" value="440" min="10" max="14000" step="10" oninput="updateFrequencyValue(${sound})">
+                
+                <br>
+                <label for="volume${sound}">Volume: </label>
+                <input type="range" id="volume${sound}" value="33" min="0" max="100" step="1" oninput="updateVolumeValue(${sound})">
+                <span id="volumeValue${sound}">33</span>
+
+                <br>
+                <button onclick="toggleTone(${sound})" id="toggleButton${sound}">Play Tone</button>
+                
+                <br> <div class="box"></div><br>
+
+                <!-- Selectable Images -->
+                <img src="res/ear_left.png" class="selectable-image" id="earLeft${sound}" onclick="selectImage('earLeft${sound}', ${sound})">
+                &nbsp;&nbsp;&nbsp;
+                <img src="res/ear_right.png" class="selectable-image" id="earRight${sound}" onclick="selectImage('earRight${sound}', ${sound})">
+            `;
+
+            if (sound === 2) {
+                document.getElementById('addSound2').innerHTML = soundHTML;
+            } else if (sound === 3) {
+                document.getElementById('addSound3').innerHTML = soundHTML;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('infoModal').style.display = 'none';
+        }
+
+        function startCalibration() {
+            // Add your calibration process here
+            closeModal();
+        }
+
+
+        function selectImage(imageId, sound) {
+            const leftImage = document.getElementById(`earLeft${sound}`);
+            const rightImage = document.getElementById(`earRight${sound}`);
+
+            if (imageId === `earLeft${sound}`) {
+                if (leftImage.classList.contains('selected')) {
+                    leftImage.classList.remove('selected');
+                } else {
+                    leftImage.classList.add('selected');
+                    rightImage.classList.remove('selected');
+                }
+            } else if (imageId === `earRight${sound}`) {
+                if (rightImage.classList.contains('selected')) {
+                    rightImage.classList.remove('selected');
+                } else {
+                    rightImage.classList.add('selected');
+                    leftImage.classList.remove('selected');
+                }
+            }
+        }
+
+        function handleMatchClick() {
+            const soundConfigurations = [];
+
+            for (let i = 1; i <= 3; i++) {
+                const frequencyElement = document.getElementById(`frequency${i}`);
+                const waveformElement = document.getElementById(`waveform${i}`);
+                const volumeElement = document.getElementById(`volume${i}`);
+                const leftImage = document.getElementById(`earLeft${i}`);
+                const rightImage = document.getElementById(`earRight${i}`);
+                let isPlaying = false;
+                let ear = 'non-specified';
+
+                if (i === 1) {
+                    isPlaying = isPlaying1;
+                } else if (i === 2) {
+                    isPlaying = isPlaying2;
+                } else if (i === 3) {
+                    isPlaying = isPlaying3;
+                }
+
+                if (leftImage && leftImage.classList.contains('selected')) {
+                    ear = 'left';
+                } else if (rightImage && rightImage.classList.contains('selected')) {
+                    ear = 'right';
+                }
+
+                if (frequencyElement && waveformElement && volumeElement) {
+                    const soundConfig = {
+                        sound: i,
+                        frequency: frequencyElement.value,
+                        waveform: waveformElement.value,
+                        volume: volumeElement.value,
+                        isPlaying: isPlaying ? 1 : 0,
+                        ear: ear
+                    };
+                    soundConfigurations.push(soundConfig);
+                }
+            }
+
+            // Convert soundConfigurations to CSV
+            const csvHeader = "sound,frequency,waveform,volume,isPlaying,ear\n";
+            const csvRows = soundConfigurations.map(config =>
+                `${config.sound},${config.frequency},${config.waveform},${config.volume},${config.isPlaying},${config.ear}`
+            );
+            const csvString = csvHeader + csvRows.join("\n");
+            console.log(csvString);
+
+            // Set the value of the text box with the CSV string
+            document.getElementById('tinnitusMatch').value = csvString;
+
+            // Update the iframe src with the CSV string
+            const iframe = document.querySelector('iframe');
+            const baseUrl = "https://forms.office.com/Pages/ResponsePage.aspx?id=I_FR8s7JjkSSdzS7KFkR2QlLtcyM--1KpijKKDu9H1xUMjFYMkNKRzBRVTBBQzlVWEtFUE4xNTZKNC4u&r0220ae0aef3c4e19a6d60821a4518951=";
+            iframe.src = `${baseUrl}${encodeURIComponent(csvString)}&embed=true`;
+
+            // Copy the CSV string to the clipboard
+            navigator.clipboard.writeText(csvString).then(() => {
+                // alert("Text copied! Please paste it into the first blank of the questionnaire in step 2.");
+            }).catch(err => {
+                // alert("Please copy-paste it into the first blank of the questionnaire in step 2.");
+            });
+        }
+
+    </script>
+</body>
+
+</html>
