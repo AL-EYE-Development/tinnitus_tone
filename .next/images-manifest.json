@@ -21,7 +21,7 @@
       256,
       384
     ],
-    "path": "/nextjs-github-pages/_next/image",
+    "path": "/_next/image",
     "loader": "default",
     "loaderFile": "",
     "domains": [],
