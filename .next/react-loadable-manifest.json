@@ -1,0 +1,23 @@
+{
+  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_app": {
+    "id": 57,
+    "files": [
+      "static/chunks/57.268c8c590d7f2802.js"
+    ]
+  },
+  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_error": {
+    "id": 4100,
+    "files": [
+      "static/chunks/100.2e3c450c44646831.js"
+    ]
+  },
+  "pages\\index.tsx -> @/components/Survey": {
+    "id": 9116,
+    "files": [
+      "static/css/2ffb8844be474efb.css",
+      "static/chunks/aeaef3f5.346b2e4187a74fec.js",
+      "static/chunks/e4a25f59.2a2ce286558473e8.js",
+      "static/chunks/116.156e8d6e1536b3ab.js"
+    ]
+  }
+}

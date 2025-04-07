@@ -1,0 +1,1 @@
+self.__DYNAMIC_CSS_MANIFEST='["static/css/2ffb8844be474efb.css"]';
