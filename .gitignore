@@ -5,5 +5,7 @@ logs
 .vscode
 .DS_Store
 .idea
+.next
+out
 yarn-error.log
 npm-debug.log
