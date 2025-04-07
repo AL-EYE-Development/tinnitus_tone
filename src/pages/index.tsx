@@ -1,7 +1,8 @@
 import Head from "next/head";
-import dynamic from 'next/dynamic';
+// import dynamic from 'next/dynamic';
 
-const SurveyComponent = dynamic(() => import("@/components/Survey"), { ssr: false });
+// const SurveyComponent = dynamic(() => import("@/components/Survey"), { ssr: false });
+import SurveyComponent from "@/components/Survey";
 
 export default function Home() {
   return (
