@@ -4,12 +4,21 @@ import { useCallback } from 'react';
 import 'survey-core/survey-core.css';
 import { Model } from 'survey-core'
 import { Survey } from 'survey-react-ui'
+// import { ColorComponent } from './ColorComponent';
+
+// import React from "react";
+// import * as SurveyCore from "survey-core";
+// components
+
 
 // const SURVEY_ID = 1;
 import {surveyJson} from './json.js';
 
 export default function SurveyComponent() {
   const survey = new Model(surveyJson);
+  survey.data = {
+    "slider-color": "#fa28ff"
+  };
   const alertResults = useCallback((sender: Model) => {
     const results = JSON.stringify(sender.data);
     alert(results);
