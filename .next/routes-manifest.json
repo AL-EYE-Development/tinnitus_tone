@@ -2,8 +2,16 @@
   "version": 3,
   "pages404": true,
   "caseSensitive": false,
-  "basePath": "",
+  "basePath": "/tinnitus_tone",
   "redirects": [
+    {
+      "source": "/tinnitus_tone/",
+      "destination": "/tinnitus_tone",
+      "basePath": false,
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^/tinnitus_tone/$"
+    },
     {
       "source": "/:path+/",
       "destination": "/:path+",
