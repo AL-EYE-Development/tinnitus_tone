@@ -105,7 +105,7 @@ export const surveyJson = {
         },
         {
           // html
-          type: "color-picker",
+          type: "html",
           name: "html",
           title: "frffff"
         }
