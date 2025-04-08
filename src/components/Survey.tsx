@@ -5,6 +5,7 @@ import 'survey-core/survey-core.css';
 import { Model } from 'survey-core'
 import { Survey } from 'survey-react-ui'
 import './SliderController';
+import './FreqSliderController';
 import React from "react";
 
 // const SURVEY_ID = 1;

@@ -7,20 +7,20 @@ import { ReactQuestionFactory, SurveyQuestionElementBase } from "survey-react-ui
 
 import { ElementFactory, Question, Serializer } from "survey-core";
 
-const CUSTOM_TYPE = "slider";
+const CUSTOM_TYPE = "fq-slider";
 const marks = [
   {
-    value: 1,
-    label: 'Slow',
+    value: 50,
+    label: 'Low/Deep',
   },
   {
-    value: 10,
-    label: 'Fast',
+    value: 13000,
+    label: 'HighPitch/Sharp',
   },
 ];
 
 
-export class SliderModel extends Question {
+export class FreqSliderModel extends Question {
   getType() {
     return CUSTOM_TYPE;
   }
@@ -52,6 +52,11 @@ Serializer.addClass(
   CUSTOM_TYPE,
   [
     {
+      name: "colorPickerType",
+      default: "Slider",
+      choices: ["Slider", "Sketch", "Compact"],
+    },
+    {
       name: "value:number",
       default: "5"
     },
@@ -64,19 +69,19 @@ Serializer.addClass(
     // },
   ],
   function () {
-    return new SliderModel("");
+    return new FreqSliderModel("");
   },
   "question"
 );
 
 ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
-  return new SliderModel(name);
+  return new FreqSliderModel(name);
 });
 
 
 
 // A class that renders questions of the new type in the UI
-export class CustomSlider extends SurveyQuestionElementBase {
+export class CustomFreqSlider extends SurveyQuestionElementBase {
   constructor(props: any) {
     super(props);
     this.state = { value: this.question.value };
@@ -112,7 +117,7 @@ export class CustomSlider extends SurveyQuestionElementBase {
   renderColor() {
     return (
       <Box sx={{ 
-        width: "80%",
+        width: "95%",
         justifyContent: 'center',
         alignItems: 'center',
         display: 'flex',
@@ -124,9 +129,9 @@ export class CustomSlider extends SurveyQuestionElementBase {
         <Slider
           value={this.question.value}
           marks={marks}
-          min={1}
-          max={10}
-          step={1}
+          min={20}
+          max={14000}
+          step={10}
           // scale={calculateValue}
           // getAriaValueText={valueLabelFormat}
           // valueLabelFormat={valueLabelFormat}
@@ -149,5 +154,5 @@ export class CustomSlider extends SurveyQuestionElementBase {
 
 // Register `SurveyQuestionColorPicker` as a class that renders `color-picker` questions
 ReactQuestionFactory.Instance.registerQuestion(CUSTOM_TYPE, (props) => {
-  return React.createElement(CustomSlider, props);
+  return React.createElement(CustomFreqSlider, props);
 });

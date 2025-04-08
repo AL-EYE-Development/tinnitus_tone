@@ -2,6 +2,7 @@ import Head from "next/head";
 import dynamic from 'next/dynamic';
 
 const SurveyComponent = dynamic(() => import("@/components/Survey"), { ssr: false });
+const PlayPauseComponent = dynamic(() => import("@/components/AudioController"), { ssr: false });
 // import SurveyComponent from "@/components/Survey";
 
 export default function Home() {
@@ -14,6 +15,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <SurveyComponent />
+      <PlayPauseComponent />
     </>
   );
 }

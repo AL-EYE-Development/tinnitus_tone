@@ -72,7 +72,7 @@ export const surveyJson = {
         },
         {
           // slider for pulsing rate/speed - 0-10Hz, 0-20Hz, 0-30Hz, 0-40Hz, 0-50Hz, 0-60Hz, 0-70Hz, 0-80Hz, 0-90Hz, 0-100Hz
-          type: "Slider",
+          type: "slider",
           name: "pulse-rate",
           title: "If pulsing how fast do you hear the sound?",
           // visible: false,
@@ -98,23 +98,33 @@ export const surveyJson = {
             "Three tones"
           ],
         },
-        // {
-        //   // Specify pitch/frequency(s) - slider(s) one rough, one fine. Top - full range of human hearing, below - fine tune pitch? Sliders B and C
-
-        // },
-        // {
-        //   // Is it pure tone or noise? Slider D (fraction) and E (waveform) pure sinus tone, through….white noise?
-
-        // },
-        // {
-        //   // Loudness Slider F
-        // }
+        {
+          // Specify pitch/frequency(s) - slider(s) one rough, one fine. Top - full range of human hearing, below - fine tune pitch? Sliders B and C
+          type: "fq-slider",
+          name: "pitch",
+          title: "How does the sound's tone like?"
+        },
+        {
+          // Is it pure tone or noise? Slider D (fraction) and E (waveform) pure sinus tone, through….white noise?
+          type: "boolean",
+          name: "pure-or-noise",
+          title: "Is it a pure tone (Yes) or more noisy (No)?"
+        },
+        {
+          type: "slider",
+          name: "fraction",
+          title: "How brand of this noise is do you hear?"
+        }, 
+        {
+          type: "slider",
+          name: "loudness",
+        },
         {
           type: "comment",
           name: "comment",
           title: "What else would you like to comment on your tinnitus?",
           maxLength: 300,
-          visible: false,
+          // visible: false,
           // "visibleIf": "{which-ear} != null",
         }
       ],
