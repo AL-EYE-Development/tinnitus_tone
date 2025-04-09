@@ -26,6 +26,8 @@ export default function SurveyComponent() {
     // )
   }, []);
 
+  // onValueChanged 
+
   survey.onComplete.add(alertResults);
 
   return (

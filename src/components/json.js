@@ -12,35 +12,35 @@ export const surveyJson = {
   logoPosition: "right",
   logoHeight: "128px",
   pages: [
-    // {
-    //   name: "info",
-    //   title: "Section I - Information",
-    //   elements: [
-    //     {
-    //       // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
-    //       type: "panel",
-    //       name: "full-name",
-    //       title: "Full name",
-    //       elements: [
-    //         {
-    //           type: "text",
-    //           name: "first-name",
-    //           title: "First name",
-    //           isRequired: true,
-    //           maxLength: 25,
-    //         },
-    //         {
-    //           type: "text",
-    //           name: "last-name",
-    //           startWithNewLine: false,
-    //           title: "Last name",
-    //           isRequired: true,
-    //           maxLength: 25,
-    //         }
-    //       ],
-    //     },
-    //   ],
-    // },
+    {
+      name: "info",
+      title: "Section I - Information",
+      elements: [
+        {
+          // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
+          type: "panel",
+          name: "full-name",
+          title: "Full name",
+          elements: [
+            {
+              type: "text",
+              name: "first-name",
+              title: "First name",
+              isRequired: true,
+              maxLength: 25,
+            },
+            {
+              type: "text",
+              name: "last-name",
+              startWithNewLine: false,
+              title: "Last name",
+              isRequired: true,
+              maxLength: 25,
+            }
+          ],
+        },
+      ],
+    },
     {
       type: "panel",
       name: "tinnitus-sound",
@@ -130,25 +130,25 @@ export const surveyJson = {
       ],
       // Two step confirmation - finished, download mp3
     },
-    // {
-    //   name: "submit",
-    //   title: "Section III - Submision & Download",
-    //   elements: [
-    //     {
-    //       // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
-    //       type: "panel",
-    //       name: "submit-form",
-    //       title: "Submit your form here",
-    //       elements: [
-    //         {
-    //           type: "html",
-    //           "html": "<iframe width=\"640px\" height=\"20000vh\"\n                src=\"https://forms.office.com/Pages/ResponsePage.aspx?id=I_FR8s7JjkSSdzS7KFkR2QlLtcyM--1KpijKKDu9H1xUMjFYMkNKRzBRVTBBQzlVWEtFUE4xNTZKNC4u&r0220ae0aef3c4e19a6d60821a4518951=placeholder&embed=true\"\n                frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\" style=\"border: none; max-width:100%; max-height:50vh\"\n                allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen></iframe>"
+    {
+      name: "submit",
+      title: "Section III - Submision & Download",
+      elements: [
+        {
+          // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
+          type: "panel",
+          name: "submit-form",
+          title: "Submit your form here",
+          elements: [
+            {
+              type: "html",
+              "html": "<iframe width=\"640px\" height=\"20000vh\"\n                src=\"https://forms.office.com/Pages/ResponsePage.aspx?id=I_FR8s7JjkSSdzS7KFkR2QlLtcyM--1KpijKKDu9H1xUMjFYMkNKRzBRVTBBQzlVWEtFUE4xNTZKNC4u&r0220ae0aef3c4e19a6d60821a4518951=placeholder&embed=true\"\n                frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\" style=\"border: none; max-width:100%; max-height:50vh\"\n                allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen></iframe>"
 
-    //         }
-    //       ],
-    //     },
-    //   ],
-    // },
+            }
+          ],
+        },
+      ],
+    },
   ],
   completeText: "Submit",
   // showPreviewBeforeComplete: true,
