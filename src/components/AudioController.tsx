@@ -3,15 +3,8 @@
 import React, { useState, useRef } from 'react';
 import { IconButton, Box, Paper } from '@mui/material';
 import { PlayArrow, Pause } from '@mui/icons-material';
+import { AudioOptions, useAudioContext } from '@/context/AudioContext';
 
-// Audio setup
-
-export interface AudioOptions {
-  frequency: number;
-  volume?: number;
-  pulsing?: boolean;
-  pulseRate?: number;
-}
 
 export class AudioController {
   private audioContext: AudioContext;
@@ -28,12 +21,6 @@ export class AudioController {
   }
 
   playTone(options: AudioOptions) {
-    const {
-      frequency,
-      volume = 0.5,
-      pulsing = false,
-      pulseRate = 1,
-    } = options;
 
     if (this.isPlaying) {
       this.stop();
@@ -41,19 +28,19 @@ export class AudioController {
 
     this.oscillator = this.audioContext.createOscillator();
     this.oscillator.type = 'sine';
-    this.oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+    this.oscillator.frequency.setValueAtTime(options.tones[0].frequency, this.audioContext.currentTime);
     this.oscillator.connect(this.gainNode);
-    this.gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+    this.gainNode.gain.setValueAtTime(options.tones[0].volume, this.audioContext.currentTime);
 
     this.oscillator.start();
     this.isPlaying = true;
 
-    if (pulsing) {
+    if (options.pulsing) {
       this.pulseInterval = window.setInterval(() => {
         const now = this.audioContext.currentTime;
         this.gainNode.gain.setValueAtTime(0, now);
-        this.gainNode.gain.linearRampToValueAtTime(volume, now + 0.2);
-      }, 1000 / pulseRate);
+        this.gainNode.gain.linearRampToValueAtTime(options.tones[0].volume, now + 0.2);
+      }, 1000 / options.pulseRate!);
     }
   }
 
@@ -83,6 +70,7 @@ export class AudioController {
 export default function PlayPauseComponent() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<AudioController | null>(null);
+  const { options } = useAudioContext(); 
 
   const togglePlay = () => {
     if (!audioRef.current) {
@@ -92,12 +80,7 @@ export default function PlayPauseComponent() {
     const audio = audioRef.current;
 
     if (!audio.isPlaying) {
-      audio.playTone({
-        frequency: 440, // A4 tone
-        volume: 0.5,
-        pulsing: true,
-        pulseRate: 2,
-      });
+      audio.playTone(options);
       setIsPlaying(true);
     } else {
       audio.stop();

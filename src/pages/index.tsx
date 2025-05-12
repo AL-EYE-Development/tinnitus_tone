@@ -1,9 +1,9 @@
 import Head from "next/head";
 import dynamic from 'next/dynamic';
+import { useState } from "react";
 
 const SurveyComponent = dynamic(() => import("@/components/Survey"), { ssr: false });
 const PlayPauseComponent = dynamic(() => import("@/components/AudioController"), { ssr: false });
-// import SurveyComponent from "@/components/Survey";
 
 export default function Home() {
   return (

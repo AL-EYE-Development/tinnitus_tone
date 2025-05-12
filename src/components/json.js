@@ -1,3 +1,4 @@
+import { Visibility } from "@mui/icons-material";
 import { type } from "os";
 import { title } from "process";
 import { isReadable } from "stream";
@@ -12,35 +13,35 @@ export const surveyJson = {
   logoPosition: "right",
   logoHeight: "128px",
   pages: [
-    {
-      name: "info",
-      title: "Section I - Information",
-      elements: [
-        {
-          // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
-          type: "panel",
-          name: "full-name",
-          title: "Full name",
-          elements: [
-            {
-              type: "text",
-              name: "first-name",
-              title: "First name",
-              isRequired: true,
-              maxLength: 25,
-            },
-            {
-              type: "text",
-              name: "last-name",
-              startWithNewLine: false,
-              title: "Last name",
-              isRequired: true,
-              maxLength: 25,
-            }
-          ],
-        },
-      ],
-    },
+    // {
+    //   name: "info",
+    //   title: "Section I - Information",
+    //   elements: [
+    //     {
+    //       // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
+    //       type: "panel",
+    //       name: "full-name",
+    //       title: "Full name",
+    //       elements: [
+    //         {
+    //           type: "text",
+    //           name: "first-name",
+    //           title: "First name",
+    //           isRequired: true,
+    //           maxLength: 25,
+    //         },
+    //         {
+    //           type: "text",
+    //           name: "last-name",
+    //           startWithNewLine: false,
+    //           title: "Last name",
+    //           isRequired: true,
+    //           maxLength: 25,
+    //         }
+    //       ],
+    //     },
+    //   ],
+    // },
     {
       type: "panel",
       name: "tinnitus-sound",
@@ -64,8 +65,6 @@ export const surveyJson = {
         {
           // Is it constant, pulsing, or random? If pulsing - Slider A for pulse rate/speed
           type: "radiogroup",
-          // visible: false,
-          // visibleIf: "{which-ear} != null",
           name: "sound-consistency",
           title: "How does the sound's tempo feel like?",
           choices: ["Consistent", "Pulsing", "Random"],
@@ -75,57 +74,73 @@ export const surveyJson = {
           type: "slider",
           name: "pulse-rate",
           title: "If pulsing how fast do you hear the sound?",
-          // visible: false,
-          // visibleIf: "{sound-consistency} == pulsing",
+          visible: false,
+          visibleIf: "{sound-consistency} == Pulsing",
         },
         {
           // Is it a click, one tone or more? If more, specify how many (2, 3, more)
           type: "boolean",
           name: "if-click",
-          title: "Is it a click you hear?"
+          labelFalse: "Click",
+          labelTrue: "Tones",
+          title: "Is it a click or tones you hear?",
           // visible: false,
           // visibleIf: "{pulse-rate} != null",
         },
         {
-          type: "radiogroup",
-          name: "number-of-tones",
-          title: "How many tones do you hear?",
+          name: "tone-panel",
+          type: "paneldynamic",
+          panelCount: 1,
+          displayMode: "tab",
+          minPanelCount: 1,
+          maxPanelCount: 3,
+          title: "Describe your tones - Modify/Add/Remove",
+          description: "You can now use the button in the corner of the page to pause/play.",
+          templateTabTitle: "Tone {panelIndex}",
+          tabAlign: "left",
           // visible: false,
-          // visibleIf: "{if-click} == false",
-          choices: [
-            "One tone",
-            "Two tones",
-            "Three tones"
+          // visibleIf: "{pulse-rate} != null",
+          templateElements: [
+            {
+              // Specify pitch/frequency(s) - slider(s) one rough, one fine. Top - full range of human hearing, below - fine tune pitch? Sliders B and C
+              type: "fq-slider",
+              name: "pitch-coarse",
+              title: "How does the sound's tone like?",
+            },
+            {
+              // Specify pitch/frequency(s) - slider(s) one rough, one fine. Top - full range of human hearing, below - fine tune pitch? Sliders B and C
+              type: "fq-slider",
+              name: "pitch-fine",
+              title: "How does the sound's tone like?",
+            },
+            {
+              // Is it pure tone or noise? Slider D (fraction) and E (waveform) pure sinus tone, through….white noise?
+              type: "boolean",
+              name: "pure-or-noise",
+              labelFalse: "Pure Tone",
+              labelTrue: "Noisy",
+              title: "Is it a pure tone or more noisy sound?",
+            },
+            {
+              type: "slider",
+              name: "waveform",
+              title: "What kind of pure tone sound (waveform) do you hear?",
+              visible: true,
+              visibleIf: "{tone-panel[0].pure-or-noise} = false",
+            },
+            {
+              type: "slider",
+              name: "fraction",
+              title: "How brand of this noise is do you hear?",
+              visible: false,
+              visibleIf: "{tone-panel[0].pure-or-noise} = true",
+            },
+            {
+              type: "slider",
+              name: "loudness",
+            },
           ],
-        },
-        {
-          // Specify pitch/frequency(s) - slider(s) one rough, one fine. Top - full range of human hearing, below - fine tune pitch? Sliders B and C
-          type: "fq-slider",
-          name: "pitch",
-          title: "How does the sound's tone like?"
-        },
-        {
-          // Is it pure tone or noise? Slider D (fraction) and E (waveform) pure sinus tone, through….white noise?
-          type: "boolean",
-          name: "pure-or-noise",
-          title: "Is it a pure tone (Yes) or more noisy (No)?"
-        },
-        {
-          type: "slider",
-          name: "fraction",
-          title: "How brand of this noise is do you hear?"
-        }, 
-        {
-          type: "slider",
-          name: "loudness",
-        },
-        {
-          type: "comment",
-          name: "comment",
-          title: "What else would you like to comment on your tinnitus?",
-          maxLength: 300,
-          // visible: false,
-          // "visibleIf": "{which-ear} != null",
+          // maybe add one more how close do you think the sound is to your tinnitus?
         }
       ],
       // Two step confirmation - finished, download mp3
@@ -142,9 +157,8 @@ export const surveyJson = {
           elements: [
             {
               type: "html",
-              "html": "<iframe width=\"640px\" height=\"20000vh\"\n                src=\"https://forms.office.com/Pages/ResponsePage.aspx?id=I_FR8s7JjkSSdzS7KFkR2QlLtcyM--1KpijKKDu9H1xUMjFYMkNKRzBRVTBBQzlVWEtFUE4xNTZKNC4u&r0220ae0aef3c4e19a6d60821a4518951=placeholder&embed=true\"\n                frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\" style=\"border: none; max-width:100%; max-height:50vh\"\n                allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen></iframe>"
-
-            }
+              html: '<iframe width="95%" height="588vh" src="https://www.survey-xact.dk/LinkCollector?key=DANGL8V3JN16"></iframe></iframe>',
+            },
           ],
         },
       ],
