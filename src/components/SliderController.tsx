@@ -3,47 +3,63 @@
 
 import * as React from "react";
 import { Slider, Typography, Box } from "@mui/material";
-import { ReactQuestionFactory, SurveyQuestionElementBase } from "survey-react-ui";
+import {
+  ReactQuestionFactory,
+  SurveyQuestionElementBase,
+} from "survey-react-ui";
 
 import { ElementFactory, Question, Serializer } from "survey-core";
+import { styled } from "@mui/material/styles";
 
 const CUSTOM_TYPE = "slider";
-const marks = [
-  {
-    value: 1,
-    label: 'Slow',
-  },
-  {
-    value: 10,
-    label: 'Fast',
-  },
-];
-
+// const marks = [
+//   {
+//     value: 2,
+//     label: "Slow",
+//   },
+//   {
+//     value: 8,
+//     label: "Fast",
+//   },
+// ];
 
 export class SliderModel extends Question {
   getType() {
     return CUSTOM_TYPE;
   }
 
-  get value() {
-    return this.getPropertyValue("value");
-  }
-  set value(val) {
-    this.setPropertyValue("value", val);
-  }
+  // get value() {
+  //   return this.getPropertyValue("value");
+  // }
+  // set value(val) {
+  //   this.setPropertyValue("value", val);
+  // }
 
   get min() {
     return this.getPropertyValue("min");
   }
-  set min(val) {  
+  set min(val) {
     this.setPropertyValue("min", val);
-  } 
+  }
 
   get max() {
     return this.getPropertyValue("max");
   }
   set max(val) {
-    this.setPropertyValue("max", val);  
+    this.setPropertyValue("max", val);
+  }
+
+  get pipsValue(): number[] {
+    return this.getPropertyValue("pipsValue") ?? [];
+  }
+  set pipsValue(val: number[]) {
+    this.setPropertyValue("pipsValue", val);
+  }
+  get pipsText(): string[] {
+    return this.getPropertyValue("pipsText") ?? [];
+  }
+  set pipsText(val: string[]) {
+    this.setPropertyValue("pipsText", val);
   }
 }
 
@@ -52,16 +68,23 @@ Serializer.addClass(
   CUSTOM_TYPE,
   [
     {
-      name: "value:number",
-      default: "5"
+      name: "min:number",
+      default: "1",
     },
-    // {
-    //   name: "disableAlpha:boolean",
-    //   dependsOn: "colorPickerType",
-    //   visibleIf: function (obj) {
-    //     return obj.colorPickerType === "Sketch";
-    //   },
-    // },
+    {
+      name: "max:number",
+      default: "10",
+    },
+    {
+      name: "pipsValue:itemvalues",
+      default: [],
+      isRequired: false,
+    },
+    {
+      name: "pipsText:itemvalues",
+      default: [],
+      isRequired: false,
+    },
   ],
   function () {
     return new SliderModel("");
@@ -72,8 +95,6 @@ Serializer.addClass(
 ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
   return new SliderModel(name);
 });
-
-
 
 // A class that renders questions of the new type in the UI
 export class CustomSlider extends SurveyQuestionElementBase {
@@ -89,13 +110,20 @@ export class CustomSlider extends SurveyQuestionElementBase {
   }
 
   get min() {
-    return this.question.min; 
+    return this.question.min;
   }
 
   get max() {
-    return this.question.max; 
+    return this.question.max;
   }
 
+  get pipsValue(): number[] {
+    return this.question.getPropertyValue("pipsValue") ?? [];
+  }
+
+  get pipsText(): string[] {
+    return this.question.getPropertyValue("pipsText") ?? [];
+  }
 
   // Support the read-only and design modes
   get style() {
@@ -110,23 +138,34 @@ export class CustomSlider extends SurveyQuestionElementBase {
   };
 
   renderColor() {
+
+    const marks = this.pipsValue.map((val, index) => ({
+      value: val,
+      // label: this.pipsText[index] ?? `${val}`,
+      label: "tt",
+    }));
+
+    console.log("marks", marks);
+
     return (
-      <Box sx={{ 
-        width: "80%",
-        justifyContent: 'center',
-        alignItems: 'center',
-        display: 'flex',
-        paddingLeft: '20px',
-      }}>
+      <Box
+        sx={{
+          width: "95%",
+          justifyContent: "center",
+          alignItems: "center",
+          display: "flex",
+          paddingLeft: "20px",
+        }}
+      >
         {/* <Typography id="non-linear-slider" gutterBottom>
           Storage: {valueLabelFormat(calculateValue(value))}
         </Typography> */}
-        <Slider
-          value={this.question.value}
+        <PrettoSlider
+          value={this.question.value ?? this.question.min}
           marks={marks}
-          min={1}
-          max={10}
-          step={1}
+          min={this.question.min}
+          max={this.question.max}
+          // step={1}
           // scale={calculateValue}
           // getAriaValueText={valueLabelFormat}
           // valueLabelFormat={valueLabelFormat}
@@ -135,19 +174,55 @@ export class CustomSlider extends SurveyQuestionElementBase {
           aria-labelledby="non-linear-slider"
         />
       </Box>
-    )
+    );
   }
 
   renderElement() {
-    return (
-      <div>
-        {this.renderColor()}
-      </div>
-    );
+    return <div>{this.renderColor()}</div>;
   }
 }
 
 // Register `SurveyQuestionColorPicker` as a class that renders `color-picker` questions
 ReactQuestionFactory.Instance.registerQuestion(CUSTOM_TYPE, (props) => {
   return React.createElement(CustomSlider, props);
+});
+
+// style the slider
+const PrettoSlider = styled(Slider)({
+  color: "#52af77",
+  // height: 8,
+  "& .MuiSlider-track": {
+    border: "none",
+  },
+  "& .MuiSlider-thumb": {
+    height: 24,
+    width: 24,
+    backgroundColor: "#fff",
+    border: "2px solid currentColor",
+    "&:focus, &:hover, &.Mui-active, &.Mui-focusVisible": {
+      boxShadow: "inherit",
+    },
+    "&::before": {
+      display: "none",
+    },
+  },
+  // "& .MuiSlider-valueLabel": {
+  //   lineHeight: 1.2,
+  //   fontSize: 12,
+  //   background: "unset",
+  //   padding: 0,
+  //   width: 32,
+  //   height: 32,
+  //   borderRadius: "50% 50% 50% 0",
+  //   backgroundColor: "#52af77",
+  //   transformOrigin: "bottom left",
+  //   transform: "translate(50%, -100%) rotate(-45deg) scale(0)",
+  //   "&::before": { display: "none" },
+  //   "&.MuiSlider-valueLabelOpen": {
+  //     transform: "translate(50%, -100%) rotate(-45deg) scale(1)",
+  //   },
+  //   "& > *": {
+  //     transform: "rotate(45deg)",
+  //   },
+  // },
 });

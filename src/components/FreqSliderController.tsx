@@ -10,27 +10,27 @@ import { ElementFactory, Question, Serializer } from "survey-core";
 const CUSTOM_TYPE = "fq-slider";
 const marks = [
   {
-    value: 50,
-    label: 'Low/Deep',
+    value: 2,
+    label: 'Slow',
   },
   {
-    value: 13000,
-    label: 'HighPitch/Sharp',
+    value: 8,
+    label: 'Fast',
   },
 ];
 
 
-export class FreqSliderModel extends Question {
+export class SliderModel extends Question {
   getType() {
     return CUSTOM_TYPE;
   }
 
-  get value() {
-    return this.getPropertyValue("value");
-  }
-  set value(val) {
-    this.setPropertyValue("value", val);
-  }
+  // get value() {
+  //   return this.getPropertyValue("value");
+  // }
+  // set value(val) {
+  //   this.setPropertyValue("value", val);
+  // }
 
   get min() {
     return this.getPropertyValue("min");
@@ -52,36 +52,28 @@ Serializer.addClass(
   CUSTOM_TYPE,
   [
     {
-      name: "colorPickerType",
-      default: "Slider",
-      choices: ["Slider", "Sketch", "Compact"],
+      name: "min:number",
+      default: "1"
     },
     {
-      name: "value:number",
-      default: "5"
-    },
-    // {
-    //   name: "disableAlpha:boolean",
-    //   dependsOn: "colorPickerType",
-    //   visibleIf: function (obj) {
-    //     return obj.colorPickerType === "Sketch";
-    //   },
-    // },
+      name: "max:number",
+      default: "10"
+    }
   ],
   function () {
-    return new FreqSliderModel("");
+    return new SliderModel("");
   },
   "question"
 );
 
 ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
-  return new FreqSliderModel(name);
+  return new SliderModel(name);
 });
 
 
 
 // A class that renders questions of the new type in the UI
-export class CustomFreqSlider extends SurveyQuestionElementBase {
+export class CustomSlider extends SurveyQuestionElementBase {
   constructor(props: any) {
     super(props);
     this.state = { value: this.question.value };
@@ -114,6 +106,7 @@ export class CustomFreqSlider extends SurveyQuestionElementBase {
     this.question.value = newValue;
   };
 
+
   renderColor() {
     return (
       <Box sx={{ 
@@ -127,11 +120,11 @@ export class CustomFreqSlider extends SurveyQuestionElementBase {
           Storage: {valueLabelFormat(calculateValue(value))}
         </Typography> */}
         <Slider
-          value={this.question.value}
+          value={this.question.value ?? this.question.min}
           marks={marks}
-          min={20}
-          max={14000}
-          step={10}
+          min={this.question.min}
+          max={this.question.max}
+          // step={1}
           // scale={calculateValue}
           // getAriaValueText={valueLabelFormat}
           // valueLabelFormat={valueLabelFormat}
@@ -154,5 +147,5 @@ export class CustomFreqSlider extends SurveyQuestionElementBase {
 
 // Register `SurveyQuestionColorPicker` as a class that renders `color-picker` questions
 ReactQuestionFactory.Instance.registerQuestion(CUSTOM_TYPE, (props) => {
-  return React.createElement(CustomFreqSlider, props);
+  return React.createElement(CustomSlider, props);
 });

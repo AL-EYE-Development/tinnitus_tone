@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import { create } from 'zustand';
 
 export interface toneOptions {
   frequency: number;
@@ -12,17 +12,19 @@ export interface toneOptions {
 
 export interface AudioOptions {
   pulsing: boolean;
-  pulseRate?: number;
+  pulseRate: number;
   isClicking: boolean;
   tones: toneOptions[];
 }
 
-interface AudioContextType {
+interface AudioState {
   options: AudioOptions;
   setOptions: (opts: AudioOptions) => void;
+  updateSound?: () => void; // optional method reference
+  setUpdateSound: (fn: () => void) => void;
 }
 
-const defaultOptions: AudioOptions = {
+const defaultAudioOptions: AudioOptions = {
   pulsing: false,
   pulseRate: 0,
   isClicking: false,
@@ -37,22 +39,8 @@ const defaultOptions: AudioOptions = {
   ],
 };
 
-const AudioContext = createContext<AudioContextType | undefined>(undefined);
-
-export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
-  const [options, setOptions] = useState<AudioOptions>(defaultOptions);
-
-  return (
-    <AudioContext.Provider value={{ options, setOptions }}>
-      {children}
-    </AudioContext.Provider>
-  );
-};
-
-export const useAudioContext = () => {
-  const ctx = useContext(AudioContext);
-  if (!ctx) {
-    throw new Error('useAudioContext must be used inside an AudioProvider');
-  }
-  return ctx;
-};
+export const useAudioStore = create<AudioState>((set) => ({
+  options: defaultAudioOptions,
+  setOptions: (opts) => set({ options: opts }),
+  setUpdateSound: (fn) => set({ updateSound: fn }),
+}));

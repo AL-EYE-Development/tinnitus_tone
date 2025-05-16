@@ -65,22 +65,30 @@ export const surveyJson = {
         {
           // Is it constant, pulsing, or random? If pulsing - Slider A for pulse rate/speed
           type: "radiogroup",
-          name: "sound-consistency",
+          name: "consistency",
           title: "How does the sound's tempo feel like?",
           choices: ["Consistent", "Pulsing", "Random"],
         },
         {
           // slider for pulsing rate/speed - 0-10Hz, 0-20Hz, 0-30Hz, 0-40Hz, 0-50Hz, 0-60Hz, 0-70Hz, 0-80Hz, 0-90Hz, 0-100Hz
           type: "slider",
-          name: "pulse-rate",
+          name: "beat",
+          min: 1,
+          max: 10,
+          pipsValue: [1, 2, 3, 4, 5],
+          pipsText: ["a", "b", "c", "d", "e"],
           title: "If pulsing how fast do you hear the sound?",
-          visible: false,
-          visibleIf: "{sound-consistency} == Pulsing",
+          // visible: false,
+          // visibleIf: "{consistency} == Pulsing",
+        },
+        {
+          type: "expression",
+          title: "You can now use the button in the corner of the page to pause/play"
         },
         {
           // Is it a click, one tone or more? If more, specify how many (2, 3, more)
           type: "boolean",
-          name: "if-click",
+          name: "click",
           labelFalse: "Click",
           labelTrue: "Tones",
           title: "Is it a click or tones you hear?",
@@ -88,30 +96,47 @@ export const surveyJson = {
           // visibleIf: "{pulse-rate} != null",
         },
         {
-          name: "tone-panel",
+          name: "tonepanel",
           type: "paneldynamic",
           panelCount: 1,
           displayMode: "tab",
           minPanelCount: 1,
           maxPanelCount: 3,
           title: "Describe your tones - Modify/Add/Remove",
-          description: "You can now use the button in the corner of the page to pause/play.",
+          description:
+            "You can now use the button in the corner of the page to pause/play.",
           templateTabTitle: "Tone {panelIndex}",
           tabAlign: "left",
           // visible: false,
           // visibleIf: "{pulse-rate} != null",
           templateElements: [
+            // {
+            //   // Specify pitch/frequency(s) - slider(s) one rough, one fine. Top - full range of human hearing, below - fine tune pitch? Sliders B and C
+            //   type: "nouislider",
+            //   name: "pitchCoarse",
+            //   title: "Coarsely change your tinnitus tone: ",
+            //   tooltips: true,
+            //   pipsMode: "positions",
+            //   rangeMin: 20,
+            //   rangeMax: 40000,
+            //   pipsValues: [0, 20, 50, 75, 100],
+            //   pipsText: [0, 2222, 4000, 10000, 20000],
+            //   pipsDensity: 4,
+            // },
             {
-              // Specify pitch/frequency(s) - slider(s) one rough, one fine. Top - full range of human hearing, below - fine tune pitch? Sliders B and C
-              type: "fq-slider",
-              name: "pitch-coarse",
-              title: "How does the sound's tone like?",
+              type: "slider",
+              name: "pitchCoarse",
+              title: "Coarsely change your tinnitus tone: ",
+              min: 20,
+              max: 20000,
             },
             {
               // Specify pitch/frequency(s) - slider(s) one rough, one fine. Top - full range of human hearing, below - fine tune pitch? Sliders B and C
               type: "fq-slider",
               name: "pitch-fine",
-              title: "How does the sound's tone like?",
+              title: "Finely change your tinnitus tone?",
+              min: -25,
+              max: 25,
             },
             {
               // Is it pure tone or noise? Slider D (fraction) and E (waveform) pure sinus tone, through….white noise?
@@ -126,22 +151,26 @@ export const surveyJson = {
               name: "waveform",
               title: "What kind of pure tone sound (waveform) do you hear?",
               visible: true,
-              visibleIf: "{tone-panel[0].pure-or-noise} = false",
+              visibleIf: "{panel.pure-or-noise} = false",
+              min: 0,
+              max: 2000,
             },
             {
               type: "slider",
               name: "fraction",
               title: "How brand of this noise is do you hear?",
               visible: false,
-              visibleIf: "{tone-panel[0].pure-or-noise} = true",
+              visibleIf: "{panel.pure-or-noise} = true",
             },
             {
               type: "slider",
               name: "loudness",
+              min: 0,
+              max: 500,
             },
           ],
           // maybe add one more how close do you think the sound is to your tinnitus?
-        }
+        },
       ],
       // Two step confirmation - finished, download mp3
     },
