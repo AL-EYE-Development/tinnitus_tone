@@ -28,13 +28,6 @@ export class SliderModel extends Question {
     return CUSTOM_TYPE;
   }
 
-  // get value() {
-  //   return this.getPropertyValue("value");
-  // }
-  // set value(val) {
-  //   this.setPropertyValue("value", val);
-  // }
-
   get min() {
     return this.getPropertyValue("min");
   }
@@ -49,16 +42,16 @@ export class SliderModel extends Question {
     this.setPropertyValue("max", val);
   }
 
-  get pipsValue(): number[] {
-    return this.getPropertyValue("pipsValue") ?? [];
+  get pipsValue(): string {
+    return this.getPropertyValue("pipsValue") ?? "";
   }
-  set pipsValue(val: number[]) {
+  set pipsValue(val: string) {
     this.setPropertyValue("pipsValue", val);
   }
-  get pipsText(): string[] {
-    return this.getPropertyValue("pipsText") ?? [];
+  get pipsText(): string {
+    return this.getPropertyValue("pipsText") ?? "";
   }
-  set pipsText(val: string[]) {
+  set pipsText(val: string) {
     this.setPropertyValue("pipsText", val);
   }
 }
@@ -76,14 +69,16 @@ Serializer.addClass(
       default: "10",
     },
     {
-      name: "pipsValue:itemvalues",
-      default: [],
-      isRequired: false,
+      name: "pipsValue",
+      type: "string",
+      visibleIndex: 1,
+      category: "general",
     },
     {
-      name: "pipsText:itemvalues",
-      default: [],
-      isRequired: false,
+      name: "pipsText",
+      type: "string",
+      category: "general",
+      visibleIndex: 1,
     },
   ],
   function () {
@@ -117,12 +112,12 @@ export class CustomSlider extends SurveyQuestionElementBase {
     return this.question.max;
   }
 
-  get pipsValue(): number[] {
-    return this.question.getPropertyValue("pipsValue") ?? [];
+  get pipsValue(): string {
+    return this.question.getPropertyValue("pipsValue") ?? "";
   }
 
-  get pipsText(): string[] {
-    return this.question.getPropertyValue("pipsText") ?? [];
+  get pipsText(): string {
+    return this.question.getPropertyValue("pipsText") ?? "";
   }
 
   // Support the read-only and design modes
@@ -138,14 +133,14 @@ export class CustomSlider extends SurveyQuestionElementBase {
   };
 
   renderColor() {
+    const values = this.pipsValue.split(",").map((s) => Number(s.trim()));
+    const labels = this.pipsText.split(",").map((s) => s.trim());
 
-    const marks = this.pipsValue.map((val, index) => ({
+    // Combine into marks array
+    const marks = values.map((val, index) => ({
       value: val,
-      // label: this.pipsText[index] ?? `${val}`,
-      label: "tt",
+      label: labels[index] ?? `${val}`,
     }));
-
-    console.log("marks", marks);
 
     return (
       <Box
