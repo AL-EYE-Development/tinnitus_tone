@@ -9,7 +9,7 @@ import "./SliderController";
 import "./FreqSliderController";
 import React from "react";
 import { useRef } from "react";
-import { useAudioStore, AudioOptions } from '@/context/AudioContext';
+import { useAudioStore, AudioOptions } from "@/context/AudioContext";
 
 import noUiSlider from "nouislider";
 import { nouislider } from "surveyjs-widgets";
@@ -29,27 +29,24 @@ export default function SurveyComponent() {
   }, []);
 
   survey.onValueChanged.add((sender, options) => {
-
     const data = sender.data;
     // console.log(typeof data.consistency);
     // console.log(data.tonepanel[0].loudness);
 
     const newOptions: AudioOptions = {
-      // pulsing: !!data.pulsing,
-      // pulseRate: data.pulseRate ? Number(data.pulseRate) : 1,
-      // isClicking: !!data.isClicking,
       pulsing: data.consistency === "Pulsing",
-      pulseRate: data.beat,
-      isClicking: data.click == false,
-      tones: [
-        {
-          frequency: Number(data.frequency) || 440,
-          pureToneOrNoisy: !!data.pureToneOrNoisy,
-          volume: Number(data.volume) || 0.5,
-          waveform: data.waveform || "sine",
-          noiseFormat: data.noiseFormat || "white",
-        },
-      ],
+      pulseRate: Number(data.beat) || 1,
+      isClicking: data.click === false,
+      tones: Array.isArray(data.tonepanel)
+        ? data.tonepanel.map((tone) => ({
+            frequency:
+              Number(tone?.pitchCoarse ?? 49) + Number(tone?.pitchFine ?? 0),
+            volume: Number(tone?.volume ?? 20) / 100,
+            pureToneOrNoisy: !!tone?.pureToneOrNoisy,
+            waveform: tone?.waveform || "sine",
+            noiseFormat: tone?.noiseFormat || data.noiseFormat || "white",
+          }))
+        : [],
     };
 
     useAudioStore.getState().setOptions(newOptions); // ✅ Works perfectly
@@ -59,13 +56,10 @@ export default function SurveyComponent() {
     }
   });
 
-
   survey.onComplete.add(alertResults);
 
   return <Survey model={survey} />;
 }
-
-
 
 // function saveSurveyResults(url: string, json: object) {
 //   fetch(url, {

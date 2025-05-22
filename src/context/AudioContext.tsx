@@ -30,9 +30,9 @@ const defaultAudioOptions: AudioOptions = {
   isClicking: false,
   tones: [
     {
-      frequency: 440,
+      frequency: 49,
       pureToneOrNoisy: true,
-      volume: 0.5,
+      volume: 0.2,
       waveform: 'sine',
       noiseFormat: 'white',
     },

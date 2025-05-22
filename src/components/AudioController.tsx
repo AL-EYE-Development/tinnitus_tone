@@ -10,27 +10,39 @@ export class AudioController {
   private oscillator?: OscillatorNode;
   private gainNode: GainNode;
   private pulseInterval?: number;
-  public isPlaying: boolean;
+  public isPlaying: boolean = false;
 
   constructor() {
     this.audioContext = new (window.AudioContext ||
       (window as any).webkitAudioContext)();
     this.gainNode = this.audioContext.createGain();
     this.gainNode.connect(this.audioContext.destination);
-    this.isPlaying = false;
+  }
+
+  calculateValue(value: number) {
+    // https://en.wikipedia.org/wiki/Piano_key_frequencies
+    return Math.round(2 ** ((value - 49) / 12) * 440);
   }
 
   playTone(options: AudioOptions) {
     if (this.isPlaying) {
-      this.stop();
+      // Already playing — just update
+      this.updateTone(options);
+      return;
     }
 
     this.oscillator = this.audioContext.createOscillator();
-    this.oscillator.type = "sine";
+    this.oscillator.type = (options.tones[0].waveform ?? "sine") as OscillatorType;
+    // "sine", "square", "sawtooth", "triangle"
+    // Uncomment to test different waveforms
+
+
+    const frequency = this.calculateValue(options.tones[0].frequency);
     this.oscillator.frequency.setValueAtTime(
-      options.tones[0].frequency,
+      frequency,
       this.audioContext.currentTime
     );
+
     this.oscillator.connect(this.gainNode);
     this.gainNode.gain.setValueAtTime(
       options.tones[0].volume,
@@ -41,14 +53,36 @@ export class AudioController {
     this.isPlaying = true;
 
     if (options.pulsing) {
-      this.pulseInterval = window.setInterval(() => {
-        const now = this.audioContext.currentTime;
-        this.gainNode.gain.setValueAtTime(0, now);
-        this.gainNode.gain.linearRampToValueAtTime(
-          options.tones[0].volume,
-          now + 0.2
-        );
-      }, 1000 / options.pulseRate);
+      this.startPulsing(options.tones[0].volume, options.pulseRate);
+    }
+  }
+
+  updateTone(options: AudioOptions) {
+    if (!this.oscillator) return;
+
+    const freq = this.calculateValue(options.tones[0].frequency);
+    const now = this.audioContext.currentTime;
+
+    // Smooth frequency update
+    this.oscillator.frequency.setTargetAtTime(freq, now, 0.01);
+
+    // Smooth volume update
+    this.gainNode.gain.setTargetAtTime(options.tones[0].volume, now, 0.01);
+  }
+
+  startPulsing(volume: number, rate: number) {
+    this.stopPulsing();
+    this.pulseInterval = window.setInterval(() => {
+      const now = this.audioContext.currentTime;
+      this.gainNode.gain.setValueAtTime(0, now);
+      this.gainNode.gain.linearRampToValueAtTime(volume, now + 0.2);
+    }, 1000 / rate);
+  }
+
+  stopPulsing() {
+    if (this.pulseInterval) {
+      clearInterval(this.pulseInterval);
+      this.pulseInterval = undefined;
     }
   }
 
@@ -59,18 +93,13 @@ export class AudioController {
       this.oscillator = undefined;
     }
 
-    if (this.pulseInterval) {
-      clearInterval(this.pulseInterval);
-      this.pulseInterval = undefined;
-    }
-
+    this.stopPulsing();
     this.isPlaying = false;
   }
 
   setVolume(volume: number) {
-    if (this.isPlaying) {
-      this.gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
-    }
+    const now = this.audioContext.currentTime;
+    this.gainNode.gain.setTargetAtTime(volume, now, 0.01);
   }
 }
 
@@ -83,8 +112,7 @@ export default function PlayPauseComponent() {
   useEffect(() => {
     useAudioStore.getState().setUpdateSound(() => {
       if (audioRef.current && isPlaying) {
-        audioRef.current.stop();
-        audioRef.current.playTone(useAudioStore.getState().options);
+        audioRef.current.updateTone(useAudioStore.getState().options);
       }
     });
   }, [isPlaying]);

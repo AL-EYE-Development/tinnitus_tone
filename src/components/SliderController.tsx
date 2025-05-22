@@ -54,6 +54,18 @@ export class SliderModel extends Question {
   set pipsText(val: string) {
     this.setPropertyValue("pipsText", val);
   }
+  get step(): number {
+    return this.getPropertyValue("step") ?? 1;
+  }
+  set step(val: number) {
+    this.setPropertyValue("step", val);
+  }
+  get default(): number {
+    return this.getPropertyValue("default") ?? 1;
+  }
+  set default(val: number) {
+    this.setPropertyValue("default", val);
+  }
 }
 
 // Add question type metadata for further serialization into JSON
@@ -80,6 +92,15 @@ Serializer.addClass(
       category: "general",
       visibleIndex: 1,
     },
+    {
+      name: "step:number",
+      default: 1,
+      category: "general",
+    },
+    {
+      name: "default:number",
+      category: "general",
+    }
   ],
   function () {
     return new SliderModel("");
@@ -120,6 +141,15 @@ export class CustomSlider extends SurveyQuestionElementBase {
     return this.question.getPropertyValue("pipsText") ?? "";
   }
 
+  get step(): number {
+    return this.question.getPropertyValue("step") ?? 1;
+  }
+
+  get default(): number {
+    return this.question.getPropertyValue("default") ?? 1;
+  }
+  
+
   // Support the read-only and design modes
   get style() {
     return this.question.getPropertyValue("readOnly") ||
@@ -156,17 +186,13 @@ export class CustomSlider extends SurveyQuestionElementBase {
           Storage: {valueLabelFormat(calculateValue(value))}
         </Typography> */}
         <PrettoSlider
-          value={this.question.value ?? this.question.min}
+          value={this.question.value ?? this.question.default}
           marks={marks}
           min={this.question.min}
           max={this.question.max}
-          // step={1}
-          // scale={calculateValue}
-          // getAriaValueText={valueLabelFormat}
-          // valueLabelFormat={valueLabelFormat}
+          step={this.question.step}
           onChange={this.handleChange}
-          valueLabelDisplay="auto"
-          aria-labelledby="non-linear-slider"
+          valueLabelDisplay="off"
         />
       </Box>
     );
