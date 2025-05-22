@@ -128,7 +128,7 @@ export class CustomSlider extends SurveyQuestionElementBase {
       : undefined;
   }
 
-  handleChange = (event: Event, newValue: number) => {
+  handleChange = (event: Event, newValue: number | number[], activeThumb: number) => {
     this.question.value = newValue;
   };
 

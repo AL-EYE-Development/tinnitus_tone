@@ -129,6 +129,8 @@ export const surveyJson = {
               title: "Coarsely change your tinnitus tone: ",
               min: 20,
               max: 20000,
+              pipsValue: "25, 4000, 20000",
+              pipsText: "Low, Medium, High",
             },
             {
               // Specify pitch/frequency(s) - slider(s) one rough, one fine. Top - full range of human hearing, below - fine tune pitch? Sliders B and C
