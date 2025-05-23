@@ -7,14 +7,13 @@ import { useAudioStore, AudioOptions } from "@/context/AudioContext";
 
 export class AudioController {
   private audioContext: AudioContext;
-  private oscillators: OscillatorNode[] = [];
+  private sources: (OscillatorNode | AudioBufferSourceNode)[] = [];
   private gainNodes: GainNode[] = [];
   private pulseInterval?: number;
   public isPlaying = false;
 
   constructor(defaultOptions?: AudioOptions) {
-    this.audioContext = new (window.AudioContext ||
-      (window as any).webkitAudioContext)();
+    this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
 
     if (defaultOptions) {
       this.playOrUpdateTone(defaultOptions);
@@ -23,92 +22,138 @@ export class AudioController {
   }
 
   private calculateValue(value: number) {
-    return Math.round(2 ** ((value - 49) / 12) * 440); // Piano key mapping
+    return Math.round(2 ** ((value - 49) / 12) * 440);
   }
 
   public playOrUpdateTone(options: AudioOptions) {
-    // Cleanup if needed
-    if (this.isPlaying && options.tones.length !== this.oscillators.length) {
-      this.cleanupOscillators();
+    if (this.isPlaying && options.tones.length !== this.sources.length) {
+      this.cleanupSources();
     }
 
-    // Create new if not already playing
+    console.log(options.noiseband)
+
     if (!this.isPlaying) {
-      this.createOscillators(options);
-      this.startOscillators();
+      this.createSources(options);
+      this.startSources();
       if (options.pulsing) {
         this.startPulsing(options.tones[0].volume, options.pulseRate || 1);
       }
       this.isPlaying = true;
     } else {
-      // Update existing ones
-      this.updateOscillators(options);
+      this.updateSources(options);
     }
   }
 
-  private createOscillators(options: AudioOptions) {
-    this.oscillators = [];
+  private createSources(options: AudioOptions) {
+    this.sources = [];
     this.gainNodes = [];
 
     options.tones.forEach((tone) => {
-      const osc = this.audioContext.createOscillator();
       const gain = this.audioContext.createGain();
+      gain.gain.setValueAtTime(tone.volume, this.audioContext.currentTime);
 
-      const waveform = tone.soundType ?? "sine";
-      if (!waveform.toLowerCase().endsWith("noise")) {
+      const waveform = tone.soundType?.toLowerCase() ?? "sine";
+      const freq = this.calculateValue(tone.frequency);
+
+      let source: OscillatorNode | AudioBufferSourceNode;
+
+      if (waveform.endsWith("noise")) {
+        source = this.createNoiseBufferSource(freq);
+      } else {
+        const osc = this.audioContext.createOscillator();
         osc.type = waveform as OscillatorType;
+        osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+        source = osc;
       }
 
-      const freq = this.calculateValue(tone.frequency);
-      osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
-
-      gain.gain.setValueAtTime(tone.volume, this.audioContext.currentTime);
-      osc.connect(gain);
+      source.connect(gain);
       gain.connect(this.audioContext.destination);
 
-      this.oscillators.push(osc);
+      this.sources.push(source);
       this.gainNodes.push(gain);
     });
   }
 
-  private startOscillators() {
-    this.oscillators.forEach((osc) => osc.start());
+  private createNoiseBufferSource(centerFreq: number): AudioBufferSourceNode {
+    const bufferSize = 2 * this.audioContext.sampleRate;
+    const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+
+    const bufferSource = this.audioContext.createBufferSource();
+    bufferSource.buffer = noiseBuffer;
+    bufferSource.loop = true;
+
+    // Apply bandpass filter centered at frequency ±½ octave
+    const filter = this.audioContext.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = centerFreq;
+    filter.Q.value = centerFreq / (centerFreq * (Math.pow(2, 0.5) - Math.pow(2, -0.5))); // approx. 0.707 bandwidth
+
+    bufferSource.connect(filter);
+    filter.connect(this.audioContext.destination); // we later reconnect to gain instead
+
+    // Re-route through gain manually
+    const manualGain = this.audioContext.createGain();
+    filter.disconnect();
+    filter.connect(manualGain);
+
+    // Save ref for gain reuse
+    this.gainNodes.push(manualGain);
+    manualGain.connect(this.audioContext.destination);
+
+    return bufferSource;
   }
 
-  private updateOscillators(options: AudioOptions) {
+  private startSources() {
+    this.sources.forEach((src) => {
+      if ("start" in src) src.start();
+    });
+  }
+
+  private updateSources(options: AudioOptions) {
     const now = this.audioContext.currentTime;
 
     options.tones.forEach((tone, i) => {
-      if (this.oscillators[i]) {
-        const freq = this.calculateValue(tone.frequency);
-        this.oscillators[i].frequency.setTargetAtTime(freq, now, 0.01);
-        this.gainNodes[i].gain.setTargetAtTime(tone.volume, now, 0.01);
-      }
+      const waveform = tone.soundType?.toLowerCase() ?? "sine";
+      const freq = this.calculateValue(tone.frequency);
+      const gain = this.gainNodes[i];
+
+      if (!waveform.endsWith("noise")) {
+        const osc = this.sources[i] as OscillatorNode;
+        osc.frequency.setTargetAtTime(freq, now, 0.01);
+        osc.type = waveform as OscillatorType;
+      } 
+
+      gain.gain.setTargetAtTime(tone.volume, now, 0.01);
     });
 
-    this.stopPulsing(); // Reset pulsing if changed
+    this.stopPulsing();
     if (options.pulsing) {
       this.startPulsing(options.tones[0].volume, options.pulseRate || 1);
     }
   }
 
-  private cleanupOscillators() {
-    this.oscillators.forEach((osc) => {
+  private cleanupSources() {
+    this.sources.forEach((src) => {
       try {
-        osc.stop();
-        osc.disconnect();
+        src.stop();
+        src.disconnect();
       } catch (e) {}
     });
     this.gainNodes.forEach((gain) => gain.disconnect());
 
-    this.oscillators = [];
+    this.sources = [];
     this.gainNodes = [];
     this.stopPulsing();
     this.isPlaying = false;
   }
 
   public stop() {
-    this.cleanupOscillators();
+    this.cleanupSources();
   }
 
   private startPulsing(volume: number, rate: number) {
