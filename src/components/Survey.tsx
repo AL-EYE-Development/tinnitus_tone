@@ -30,7 +30,7 @@ export default function SurveyComponent() {
 
   survey.onValueChanged.add((sender, options) => {
     const data = sender.data;
-    // console.log(typeof data.consistency);
+    // console.log(typeof data.tonepanel[0]);
     // console.log(data.tonepanel[0].loudness);
 
     const newOptions: AudioOptions = {
@@ -38,18 +38,19 @@ export default function SurveyComponent() {
       pulseRate: Number(data.beat) || 1,
       isClicking: data.click === false,
       tones: Array.isArray(data.tonepanel)
-        ? data.tonepanel.map((tone) => ({
+        ? data.tonepanel.map((tone: any) => ({
             frequency:
               Number(tone?.pitchCoarse ?? 49) + Number(tone?.pitchFine ?? 0),
             volume: Number(tone?.volume ?? 20) / 100,
-            pureToneOrNoisy: !!tone?.pureToneOrNoisy,
-            waveform: tone?.waveform || "sine",
-            noiseFormat: tone?.noiseFormat || data.noiseFormat || "white",
+            soundType: tone?.waveform ?? "sine",
+            noiseband: tone?.noiseband ?? 0.0,
           }))
         : [],
     };
 
-    useAudioStore.getState().setOptions(newOptions); // ✅ Works perfectly
+    console.log(data.tonepanel[0].waveform);
+    
+    useAudioStore.getState().setOptions(newOptions);
     const updateSound = useAudioStore.getState().updateSound;
     if (updateSound) {
       updateSound();

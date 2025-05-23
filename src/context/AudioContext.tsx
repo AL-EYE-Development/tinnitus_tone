@@ -4,10 +4,9 @@ import { create } from 'zustand';
 
 export interface toneOptions {
   frequency: number;
-  pureToneOrNoisy: boolean;
   volume: number;
-  waveform: string;
-  noiseFormat: string;
+  soundType: string;
+  noiseband: number;
 }
 
 export interface AudioOptions {
@@ -31,10 +30,9 @@ const defaultAudioOptions: AudioOptions = {
   tones: [
     {
       frequency: 49,
-      pureToneOrNoisy: true,
       volume: 0.2,
-      waveform: 'sine',
-      noiseFormat: 'white',
+      soundType: 'sine',
+      noiseband: 0.0,
     },
   ],
 };
