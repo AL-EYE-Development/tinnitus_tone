@@ -5,164 +5,197 @@ import { IconButton, Box, Paper } from "@mui/material";
 import { PlayArrow, Pause } from "@mui/icons-material";
 import { useAudioStore, AudioOptions } from "@/context/AudioContext";
 
+type SoundPart = {
+  oscillator: OscillatorNode;
+  noiseSource: AudioBufferSourceNode | null;
+  filter: BiquadFilterNode;
+  gain: GainNode;
+  currentType: "tone" | "noise";
+  enabled?: boolean;
+};
+
 export class AudioController {
   private audioContext: AudioContext;
-  private sources: (OscillatorNode | AudioBufferSourceNode)[] = [];
-  private gainNodes: GainNode[] = [];
+  private parts: SoundPart[] = [];
   private pulseInterval?: number;
   public isPlaying = false;
+  private noiseBuffers: Map<string, AudioBuffer> = new Map();
 
-  constructor(defaultOptions?: AudioOptions) {
-    this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  constructor() {
+    this.audioContext = new (window.AudioContext ||
+      (window as any).webkitAudioContext)();
 
-    if (defaultOptions) {
-      this.playOrUpdateTone(defaultOptions);
-      this.isPlaying = true;
+    this.noiseBuffers = new Map([
+      ["white", this.createNoiseBufferSource("white")],
+      ["pink", this.createNoiseBufferSource("pink")],
+      ["brown", this.createNoiseBufferSource("brown")]
+    ]);
+
+    for (let i = 0; i < 3; i++) {
+      const gain = this.audioContext.createGain();
+      gain.gain.value = 0;
+      gain.connect(this.audioContext.destination);
+
+      const oscillator = this.audioContext.createOscillator();
+      oscillator.type = "sine";
+      oscillator.frequency.value = 440;
+      oscillator.start();
+
+      const filter = this.audioContext.createBiquadFilter();
+      filter.type = "bandpass"; // default, may change later
+
+      const part: SoundPart = {
+        oscillator,
+        noiseSource: null,
+        filter,
+        gain,
+        currentType: "tone",
+      };
+
+      oscillator.connect(gain); // initially tone is connected
+      this.parts.push(part);
     }
   }
 
-  private calculateValue(value: number) {
+  private calculateValue(value: number): number {
     return Math.round(2 ** ((value - 49) / 12) * 440);
   }
 
   public playOrUpdateTone(options: AudioOptions) {
-    if (this.isPlaying && options.tones.length !== this.sources.length) {
-      this.cleanupSources();
-    }
-
-    console.log(options.noiseband)
-
-    if (!this.isPlaying) {
-      this.createSources(options);
-      this.startSources();
-      if (options.pulsing) {
-        this.startPulsing(options.tones[0].volume, options.pulseRate || 1);
-      }
-      this.isPlaying = true;
-    } else {
-      this.updateSources(options);
-    }
-  }
-
-  private createSources(options: AudioOptions) {
-    this.sources = [];
-    this.gainNodes = [];
-
-    options.tones.forEach((tone) => {
-      const gain = this.audioContext.createGain();
-      gain.gain.setValueAtTime(tone.volume, this.audioContext.currentTime);
-
-      const waveform = tone.soundType?.toLowerCase() ?? "sine";
-      const freq = this.calculateValue(tone.frequency);
-
-      let source: OscillatorNode | AudioBufferSourceNode;
-
-      if (waveform.endsWith("noise")) {
-        source = this.createNoiseBufferSource(freq);
-      } else {
-        const osc = this.audioContext.createOscillator();
-        osc.type = waveform as OscillatorType;
-        osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
-        source = osc;
-      }
-
-      source.connect(gain);
-      gain.connect(this.audioContext.destination);
-
-      this.sources.push(source);
-      this.gainNodes.push(gain);
-    });
-  }
-
-  private createNoiseBufferSource(centerFreq: number): AudioBufferSourceNode {
-    const bufferSize = 2 * this.audioContext.sampleRate;
-    const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
-
-    const bufferSource = this.audioContext.createBufferSource();
-    bufferSource.buffer = noiseBuffer;
-    bufferSource.loop = true;
-
-    // Apply bandpass filter centered at frequency ±½ octave
-    const filter = this.audioContext.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.value = centerFreq;
-    filter.Q.value = centerFreq / (centerFreq * (Math.pow(2, 0.5) - Math.pow(2, -0.5))); // approx. 0.707 bandwidth
-
-    bufferSource.connect(filter);
-    filter.connect(this.audioContext.destination); // we later reconnect to gain instead
-
-    // Re-route through gain manually
-    const manualGain = this.audioContext.createGain();
-    filter.disconnect();
-    filter.connect(manualGain);
-
-    // Save ref for gain reuse
-    this.gainNodes.push(manualGain);
-    manualGain.connect(this.audioContext.destination);
-
-    return bufferSource;
-  }
-
-  private startSources() {
-    this.sources.forEach((src) => {
-      if ("start" in src) src.start();
-    });
-  }
-
-  private updateSources(options: AudioOptions) {
     const now = this.audioContext.currentTime;
 
     options.tones.forEach((tone, i) => {
-      const waveform = tone.soundType?.toLowerCase() ?? "sine";
+      const part = this.parts[i];
       const freq = this.calculateValue(tone.frequency);
-      const gain = this.gainNodes[i];
+      const volume = tone.volume;
+      const soundType = tone.soundType?.toLowerCase() ?? "sine";
 
-      if (!waveform.endsWith("noise")) {
-        const osc = this.sources[i] as OscillatorNode;
-        osc.frequency.setTargetAtTime(freq, now, 0.01);
-        osc.type = waveform as OscillatorType;
-      } 
+      part.gain.gain.setValueAtTime(volume, now);
 
-      gain.gain.setTargetAtTime(tone.volume, now, 0.01);
+      const isNoise = soundType.endsWith("noise");
+
+      // Disconnect existing connections
+      part.oscillator.disconnect();
+      if (part.noiseSource) {
+        try {
+          part.noiseSource.stop();
+        } catch {}
+        part.noiseSource.disconnect();
+        part.noiseSource = null;
+      }
+      part.filter.disconnect();
+
+      if (isNoise) {
+        const noiseKind = soundType.replace(" noise", "") as
+          | "white"
+          | "pink"
+          | "brown";
+        const noiseBuffer = this.createNoiseBufferSource(noiseKind);
+        const source = this.audioContext.createBufferSource();
+        source.buffer = noiseBuffer;
+        source.loop = true;
+        source.connect(part.filter);
+        part.filter.connect(part.gain);
+        source.start();
+
+        const q = this.calculateFilterQ(freq, tone.noiseband ?? 6);
+        part.filter.type = "bandpass";
+        part.filter.frequency.setValueAtTime(freq, now);
+        part.filter.Q.setValueAtTime(q, now);
+
+        part.noiseSource = source;
+        part.currentType = "noise";
+      } else {
+        part.oscillator.type = soundType as OscillatorType;
+        part.oscillator.frequency.setTargetAtTime(freq, now, 0.01);
+        part.oscillator.connect(part.gain);
+        part.currentType = "tone";
+      }
     });
+
+    // Mute any unused parts
+    for (let i = options.tones.length; i < this.parts.length; i++) {
+      const part = this.parts[i];
+
+      // Disconnect and mute
+      part.oscillator.disconnect();
+      if (part.noiseSource) {
+        try {
+          part.noiseSource.stop();
+        } catch {}
+        part.noiseSource.disconnect();
+        part.noiseSource = null;
+      }
+      part.filter.disconnect();
+      part.gain.gain.setValueAtTime(0, now);
+    }
 
     this.stopPulsing();
     if (options.pulsing) {
       this.startPulsing(options.tones[0].volume, options.pulseRate || 1);
     }
+
+    this.isPlaying = true;
   }
 
-  private cleanupSources() {
-    this.sources.forEach((src) => {
-      try {
-        src.stop();
-        src.disconnect();
-      } catch (e) {}
-    });
-    this.gainNodes.forEach((gain) => gain.disconnect());
+  private createNoiseBufferSource(
+    type: "white" | "pink" | "brown"
+  ): AudioBuffer {
+    const bufferSize = 2 * this.audioContext.sampleRate;
+    const noiseBuffer = this.audioContext.createBuffer(
+      1,
+      bufferSize,
+      this.audioContext.sampleRate
+    );
+    const output = noiseBuffer.getChannelData(0);
 
-    this.sources = [];
-    this.gainNodes = [];
-    this.stopPulsing();
-    this.isPlaying = false;
+    let lastOut = 0,
+      b0 = 0,
+      b1 = 0,
+      b2 = 0,
+      b3 = 0,
+      b4 = 0,
+      b5 = 0,
+      b6 = 0;
+
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      if (type === "white") {
+        output[i] = white;
+      } else if (type === "brown") {
+        output[i] = (lastOut + 0.02 * white) / 1.02;
+        lastOut = output[i];
+        output[i] *= 3.5;
+      } else if (type === "pink") {
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.969 * b2 + white * 0.153852;
+        b3 = 0.8665 * b3 + white * 0.3104856;
+        b4 = 0.55 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.016898;
+        output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+        output[i] *= 0.11;
+        b6 = white * 0.115926;
+      }
+    }
+
+    return noiseBuffer;
   }
 
-  public stop() {
-    this.cleanupSources();
+  private calculateFilterQ(centerFreq: number, fraction: number): number {
+    return (
+      centerFreq /
+      (centerFreq *
+        (Math.pow(2, 1 / (2 * fraction)) - Math.pow(2, -1 / (2 * fraction))))
+    );
   }
 
   private startPulsing(volume: number, rate: number) {
-    this.stopPulsing();
     this.pulseInterval = window.setInterval(() => {
       const now = this.audioContext.currentTime;
-      this.gainNodes.forEach((gain) => {
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(volume, now + 0.2);
+      this.parts.forEach((part) => {
+        part.gain.gain.setValueAtTime(0, now);
+        part.gain.gain.linearRampToValueAtTime(volume, now + 0.2);
       });
     }, 1000 / rate);
   }
@@ -172,6 +205,23 @@ export class AudioController {
       clearInterval(this.pulseInterval);
       this.pulseInterval = undefined;
     }
+  }
+
+  public stop() {
+    this.parts.forEach((part) => {
+      part.oscillator.disconnect();
+      if (part.noiseSource) {
+        try {
+          part.noiseSource.stop();
+        } catch {}
+        part.noiseSource.disconnect();
+      }
+      part.filter.disconnect();
+      part.gain.disconnect();
+    });
+
+    this.stopPulsing();
+    this.isPlaying = false;
   }
 }
 

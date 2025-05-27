@@ -174,7 +174,7 @@
                 fraction = document.getElementById("fraction").value;
                 const f_low = freq / Math.pow(2, 1 / fraction);
                 const f_high = freq * Math.pow(2, 1 / fraction);
-
+                console.log("----");
                 if (highpassFilter) {
                     highpassFilter.frequency.value = f_low;
                 }
@@ -203,7 +203,8 @@
                 noiseSource = audioCtx.createBufferSource();
                 noiseSource.buffer = generateWhiteNoise(audioCtx);
                 noiseSource.loop = true;
-
+                
+                console.log("update");
                 fraction = document.getElementById("fraction").value;
                 const freq = document.getElementById("frequency").value;
                 const f_low = freq / Math.pow(2, 1 / fraction);

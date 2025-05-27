@@ -48,7 +48,7 @@ export default function SurveyComponent() {
         : [],
     };
 
-    console.log(data.tonepanel[0].waveform);
+    // console.log(data.tonepanel[0].waveform);
     
     useAudioStore.getState().setOptions(newOptions);
     const updateSound = useAudioStore.getState().updateSound;
