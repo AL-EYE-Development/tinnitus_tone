@@ -28,7 +28,7 @@ export class AudioController {
     this.noiseBuffers = new Map([
       ["white", this.createNoiseBufferSource("white")],
       ["pink", this.createNoiseBufferSource("pink")],
-      ["brown", this.createNoiseBufferSource("brown")]
+      ["brown", this.createNoiseBufferSource("brown")],
     ]);
 
     for (let i = 0; i < 3; i++) {
@@ -90,7 +90,9 @@ export class AudioController {
           | "white"
           | "pink"
           | "brown";
-        const noiseBuffer = this.createNoiseBufferSource(noiseKind);
+        const noiseBuffer = this.noiseBuffers.get(noiseKind);
+        if (!noiseBuffer) return;
+
         const source = this.audioContext.createBufferSource();
         source.buffer = noiseBuffer;
         source.loop = true;
@@ -241,18 +243,20 @@ export default function PlayPauseComponent() {
     });
   }, [isPlaying]);
 
+  // OscillatorNode and AudioBufferSourceNode are not reusable once stopped, recreate for simplicity
   const togglePlay = () => {
-    if (!audioRef.current) {
-      audioRef.current = new AudioController();
-    }
-
-    const audio = audioRef.current;
-
-    if (!audio.isPlaying) {
+    if (!isPlaying) {
+      // Create a fresh instance
+      const audio = new AudioController();
+      audioRef.current = audio;
       audio.playOrUpdateTone(options);
       setIsPlaying(true);
     } else {
-      audio.stop();
+      // Stop and dispose current audio controller
+      if (audioRef.current) {
+        audioRef.current.stop();
+        audioRef.current = null;
+      }
       setIsPlaying(false);
     }
   };

@@ -43,7 +43,7 @@ export default function SurveyComponent() {
               Number(tone?.pitchCoarse ?? 49) + Number(tone?.pitchFine ?? 0),
             volume: Number(tone?.volume ?? 20) / 100,
             soundType: tone?.waveform ?? "sine",
-            noiseband: tone?.noiseband ?? 0.0,
+            noiseband: transformNoiseBand(tone?.noiseband ?? 0.0),
           }))
         : [],
     };
@@ -60,6 +60,14 @@ export default function SurveyComponent() {
   survey.onComplete.add(alertResults);
 
   return <Survey model={survey} />;
+}
+
+function transformNoiseBand(value: number): number {
+  if (value <= 6) {
+    return 7 - value;
+  } else {
+    return 1 / (value - 6);
+  }
 }
 
 // function saveSurveyResults(url: string, json: object) {
