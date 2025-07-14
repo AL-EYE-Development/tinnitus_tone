@@ -13,35 +13,35 @@ export const surveyJson = {
   logoPosition: "right",
   logoHeight: "128px",
   pages: [
-    // {
-    //   name: "info",
-    //   title: "Section I - Information",
-    //   elements: [
-    //     {
-    //       // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
-    //       type: "panel",
-    //       name: "full-name",
-    //       title: "Full name",
-    //       elements: [
-    //         {
-    //           type: "text",
-    //           name: "first-name",
-    //           title: "First name",
-    //           isRequired: true,
-    //           maxLength: 25,
-    //         },
-    //         {
-    //           type: "text",
-    //           name: "last-name",
-    //           startWithNewLine: false,
-    //           title: "Last name",
-    //           isRequired: true,
-    //           maxLength: 25,
-    //         }
-    //       ],
-    //     },
-    //   ],
-    // },
+    {
+      name: "info",
+      title: "Section I - Information",
+      elements: [
+        {
+          // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
+          type: "panel",
+          name: "full-name",
+          title: "Full name",
+          elements: [
+            {
+              type: "text",
+              name: "first-name",
+              title: "First name",
+              // isRequired: true,
+              maxLength: 25,
+            },
+            {
+              type: "text",
+              name: "last-name",
+              startWithNewLine: false,
+              title: "Last name",
+              // isRequired: true,
+              maxLength: 25,
+            }
+          ],
+        },
+      ],
+    },
     {
       type: "panel",
       name: "tinnitus-sound",
@@ -51,7 +51,7 @@ export const surveyJson = {
           // Left ear, right ear, or both ears? Or is it inside the head? If both ears, is it the same in both ears or different?
           type: "radiogroup",
           name: "which-ear",
-          isRequired: true,
+          // isRequired: true,
           title: "Where do you hear the sound?",
           description:
             "💡 If you can distinguish different sounds in both of your ears, please kindly go through this questionnaire twice.",
@@ -204,6 +204,17 @@ export const surveyJson = {
         },
       ],
     },
+    {
+      name: "Download and play your sound",
+      title: "Section IV - Download and play your sound",
+      elements: [
+        {
+          type: "html",
+          html: `<p>Click the button below to download your sound as an mp3 file. After downloading, you can play it on your device.</p>
+                 <button class="btn btn-primary" onclick="window.location.href='https://example.com/download-sound.mp3'">Download Sound</button>`,
+        },
+      ],
+    }
   ],
   completeText: "Submit",
   // showPreviewBeforeComplete: true,

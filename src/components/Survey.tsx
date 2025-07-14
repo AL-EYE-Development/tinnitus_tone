@@ -8,13 +8,7 @@ import { Survey } from "survey-react-ui";
 import "./SliderController";
 import "./FreqSliderController";
 import React from "react";
-import { useRef } from "react";
 import { useAudioStore, AudioOptions } from "@/context/AudioContext";
-
-import noUiSlider from "nouislider";
-import { nouislider } from "surveyjs-widgets";
-import "nouislider/distribute/nouislider.css";
-nouislider(SurveyCore);
 
 // const SURVEY_ID = 1;
 import { surveyJson } from "./json.js";
@@ -57,6 +51,13 @@ export default function SurveyComponent() {
     }
   });
 
+  // get current surveyjs page 
+  survey.onCurrentPageChanged.add((sender, options) => {
+    if (sender.currentPageNo == 3) {
+      console.log("Current page is 3");
+    }
+  });
+
   survey.onComplete.add(alertResults);
 
   return <Survey model={survey} />;
@@ -69,23 +70,3 @@ function transformNoiseBand(value: number): number {
     return 1 / (value - 6);
   }
 }
-
-// function saveSurveyResults(url: string, json: object) {
-//   fetch(url, {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json;charset=UTF-8'
-//     },
-//     body: JSON.stringify(json)
-//   })
-//   .then(response => {
-//     if (response.ok) {
-//       // Handle success
-//     } else {
-//       // Handle error
-//     }
-//   })
-//   .catch(error => {
-//     // Handle error
-//   });
-// }
