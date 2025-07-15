@@ -20,11 +20,22 @@ export class AudioController {
   private pulseInterval?: number;
   public isPlaying = false;
   private noiseBuffers: Map<string, AudioBuffer> = new Map();
+  private mediaRecorder?: MediaRecorder;
+  private recordedChunks: Blob[] = [];
+  private mediaStreamDestination?: MediaStreamAudioDestinationNode;
+  private mainGain?: GainNode;
 
   constructor() {
     this.audioContext = new (window.AudioContext ||
       (window as any).webkitAudioContext)();
 
+    // Create main gain node for routing audio
+    this.mainGain = this.audioContext.createGain();
+    this.mainGain.connect(this.audioContext.destination);
+
+    // Create media stream destination for recording
+    this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
+    
     this.noiseBuffers = new Map([
       ["white", this.createNoiseBufferSource("white")],
       ["pink", this.createNoiseBufferSource("pink")],
@@ -34,7 +45,7 @@ export class AudioController {
     for (let i = 0; i < 3; i++) {
       const gain = this.audioContext.createGain();
       gain.gain.value = 0;
-      gain.connect(this.audioContext.destination);
+      gain.connect(this.mainGain);
 
       const oscillator = this.audioContext.createOscillator();
       oscillator.type = "sine";
@@ -137,6 +148,11 @@ export class AudioController {
       this.startPulsing(options.tones[0].volume, options.pulseRate || 1);
     }
 
+    // Handle downloading
+    if (options.isDowloading) {
+      this.downloadAudio();
+    }
+
     this.isPlaying = true;
   }
 
@@ -223,7 +239,90 @@ export class AudioController {
     });
 
     this.stopPulsing();
+    
+    // Stop recording if active
+    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+      this.mediaRecorder.stop();
+    }
+    
     this.isPlaying = false;
+  }
+
+  private setupRecording() {
+    if (!this.mediaStreamDestination) return;
+
+    this.recordedChunks = [];
+    this.mediaRecorder = new MediaRecorder(this.mediaStreamDestination.stream);
+    
+    this.mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        this.recordedChunks.push(event.data);
+      }
+    };
+  }
+
+  public startRecording() {
+    if (!this.mainGain || !this.mediaStreamDestination) return;
+
+    this.setupRecording();
+    this.mainGain.connect(this.mediaStreamDestination);
+    this.mediaRecorder?.start();
+  }
+
+  public stopRecording(): Promise<Blob> {
+    return new Promise((resolve) => {
+      if (!this.mediaRecorder) {
+        resolve(new Blob());
+        return;
+      }
+
+      this.mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(this.recordedChunks, { type: 'audio/webm' });
+        resolve(audioBlob);
+      };
+
+      this.mediaRecorder.stop();
+      
+      // Disconnect from recording destination
+      if (this.mainGain && this.mediaStreamDestination) {
+        try {
+          this.mainGain.disconnect(this.mediaStreamDestination);
+        } catch (e) {
+          // Connection might already be disconnected
+        }
+      }
+    });
+  }
+
+  public async downloadAudio(duration: number = 10000): Promise<void> {
+    if (!this.isPlaying) return;
+
+    this.startRecording();
+    
+    // Record for specified duration
+    await new Promise(resolve => setTimeout(resolve, duration));
+    
+    const audioBlob = await this.stopRecording();
+    
+    // Create download link
+    const url = URL.createObjectURL(audioBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tinnitus_tone_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Enhanced download method with custom duration
+  public async downloadAudioWithDuration(durationMs: number = 10000): Promise<void> {
+    await this.downloadAudio(durationMs);
+  }
+
+  // Check if currently recording
+  public isRecording(): boolean {
+    return this.mediaRecorder?.state === 'recording';
   }
 }
 

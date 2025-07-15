@@ -14,6 +14,7 @@ export interface AudioOptions {
   pulseRate: number;
   isClicking: boolean;
   tones: toneOptions[];
+  isDowloading: boolean;
 }
 
 interface AudioState {
@@ -35,6 +36,7 @@ const defaultAudioOptions: AudioOptions = {
       noiseband: 0.0,
     },
   ],
+  isDowloading: false
 };
 
 export const useAudioStore = create<AudioState>((set) => ({

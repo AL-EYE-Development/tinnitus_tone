@@ -9,6 +9,7 @@ import "./SliderController";
 import "./FreqSliderController";
 import React from "react";
 import { useAudioStore, AudioOptions } from "@/context/AudioContext";
+import { useEffect } from "react";
 
 // const SURVEY_ID = 1;
 import { surveyJson } from "./json.js";
@@ -53,10 +54,18 @@ export default function SurveyComponent() {
 
   // get current surveyjs page 
   survey.onCurrentPageChanged.add((sender, options) => {
-    if (sender.currentPageNo == 3) {
-      console.log("Current page is 3");
+    // third page start initialize sound download
+    if (sender.currentPageNo == 2) {
+      
     }
   });
+
+  useEffect(() => {
+    // Expose download function globally
+    (window as any).downloadSound = () => {
+      console.log("download button");
+    };
+  }, []);
 
   survey.onComplete.add(alertResults);
 

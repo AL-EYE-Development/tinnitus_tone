@@ -211,7 +211,7 @@ export const surveyJson = {
         {
           type: "html",
           html: `<p>Click the button below to download your sound as an mp3 file. After downloading, you can play it on your device.</p>
-                 <button class="btn btn-primary" onclick="window.location.href='https://example.com/download-sound.mp3'">Download Sound</button>`,
+                 <button class="btn btn-primary" onclick="downloadSound()">Download Sound</button>`,
         },
       ],
     }
