@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, use } from "react";
 import { IconButton, Box, Paper } from "@mui/material";
 import { PlayArrow, Pause } from "@mui/icons-material";
 import { useAudioStore, AudioOptions } from "@/context/AudioContext";
@@ -24,6 +24,7 @@ export class AudioController {
   private recordedChunks: Blob[] = [];
   private mediaStreamDestination?: MediaStreamAudioDestinationNode;
   private mainGain?: GainNode;
+  private audioUrl: string | null = null;
 
   constructor() {
     this.audioContext = new (window.AudioContext ||
@@ -72,7 +73,7 @@ export class AudioController {
     return Math.round(2 ** ((value - 49) / 12) * 440);
   }
 
-  public playOrUpdateTone(options: AudioOptions) {
+  public async playOrUpdateTone(options: AudioOptions): Promise<string | void> {
     const now = this.audioContext.currentTime;
 
     options.tones.forEach((tone, i) => {
@@ -149,8 +150,10 @@ export class AudioController {
     }
 
     // Handle downloading
-    if (options.isDowloading) {
-      this.downloadAudio();
+    if (options.isDownloading) {
+      console.log("enter downloadaudio");
+      await this.downloadAudio();
+      return this.getAudioUrl();
     }
 
     this.isPlaying = true;
@@ -294,35 +297,26 @@ export class AudioController {
     });
   }
 
-  public async downloadAudio(duration: number = 10000): Promise<void> {
-    if (!this.isPlaying) return;
+  public async downloadAudio(duration: number = 5000): Promise<string | void> {
+    // if (!this.isPlaying) return;
 
+    console.log("Starting recording/download...");
     this.startRecording();
-    
+
     // Record for specified duration
     await new Promise(resolve => setTimeout(resolve, duration));
-    
+
     const audioBlob = await this.stopRecording();
-    
-    // Create download link
-    const url = URL.createObjectURL(audioBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `tinnitus_tone_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    // Create and return download URL
+    // this.audioUrl = URL.createObjectURL(audioBlob);
+    this.audioUrl = URL.createObjectURL(audioBlob);
+    console.log("Download URL created:", this.audioUrl);
+    return this.audioUrl;
   }
 
-  // Enhanced download method with custom duration
-  public async downloadAudioWithDuration(durationMs: number = 10000): Promise<void> {
-    await this.downloadAudio(durationMs);
-  }
-
-  // Check if currently recording
-  public isRecording(): boolean {
-    return this.mediaRecorder?.state === 'recording';
+  public getAudioUrl(): string {
+    return this.audioUrl ? this.audioUrl : "";
   }
 }
 
@@ -334,10 +328,17 @@ export default function PlayPauseComponent() {
   const { options } = useAudioStore.getState();
 
   useEffect(() => {
-    // Bind update function externally
-    useAudioStore.getState().setUpdateSound(() => {
-      if (audioRef.current && isPlaying) {
-        audioRef.current.playOrUpdateTone(useAudioStore.getState().options);
+    // update sound when options change
+    useAudioStore.getState().setUpdateSound(async () => {
+      console.log(audioRef.current);
+      if (audioRef.current) {
+        console.log("online");
+        const res = await audioRef.current.playOrUpdateTone(useAudioStore.getState().options);
+        if (res) {
+          console.log("-----");
+          useAudioStore.getState().setDownloadStatus('done');
+          useAudioStore.getState().setDownloadedSounds(audioRef.current.getAudioUrl());
+        }
       }
     });
   }, [isPlaying]);
@@ -354,7 +355,7 @@ export default function PlayPauseComponent() {
       // Stop and dispose current audio controller
       if (audioRef.current) {
         audioRef.current.stop();
-        audioRef.current = null;
+        // audioRef.current = null;
       }
       setIsPlaying(false);
     }

@@ -14,7 +14,7 @@ export interface AudioOptions {
   pulseRate: number;
   isClicking: boolean;
   tones: toneOptions[];
-  isDowloading: boolean;
+  isDownloading: boolean;
 }
 
 interface AudioState {
@@ -22,6 +22,11 @@ interface AudioState {
   setOptions: (opts: AudioOptions) => void;
   updateSound?: () => void; // optional method reference
   setUpdateSound: (fn: () => void) => void;
+  downloadedSoundsUrl?: string;
+  setDownloadedSounds: (sounds: string) => void;
+  downloadStatus?: 'idle' | 'done' | 'error';
+  setDownloadStatus: (status: 'idle' | 'done' | 'error') => void;
+  setIsDownloadInOption: (isDownloading: boolean) => void;
 }
 
 const defaultAudioOptions: AudioOptions = {
@@ -36,11 +41,23 @@ const defaultAudioOptions: AudioOptions = {
       noiseband: 0.0,
     },
   ],
-  isDowloading: false
+  isDownloading: false
 };
 
 export const useAudioStore = create<AudioState>((set) => ({
   options: defaultAudioOptions,
   setOptions: (opts) => set({ options: opts }),
   setUpdateSound: (fn) => set({ updateSound: fn }),
+  downloadedSounds: "",
+  setDownloadedSounds: (sounds) => set({ downloadedSoundsUrl: sounds }),
+  downloadStatus: 'idle',
+  setDownloadStatus: (status) => set({ downloadStatus: status }),
+  setIsDownloadInOption: (isDownloading: boolean) => {
+    set((state) => ({
+      options: {
+        ...state.options,
+        isDownloading: isDownloading,
+      },
+    }));
+  }
 }));
