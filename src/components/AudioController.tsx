@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, use } from "react";
 import { IconButton, Box, Paper } from "@mui/material";
 import { PlayArrow, Pause } from "@mui/icons-material";
 import { useAudioStore, AudioOptions } from "@/context/AudioContext";
@@ -20,11 +20,23 @@ export class AudioController {
   private pulseInterval?: number;
   public isPlaying = false;
   private noiseBuffers: Map<string, AudioBuffer> = new Map();
+  private mediaRecorder?: MediaRecorder;
+  private recordedChunks: Blob[] = [];
+  private mediaStreamDestination?: MediaStreamAudioDestinationNode;
+  private mainGain?: GainNode;
+  private audioUrl: string | null = null;
 
   constructor() {
     this.audioContext = new (window.AudioContext ||
       (window as any).webkitAudioContext)();
 
+    // Create main gain node for routing audio
+    this.mainGain = this.audioContext.createGain();
+    this.mainGain.connect(this.audioContext.destination);
+
+    // Create media stream destination for recording
+    this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
+    
     this.noiseBuffers = new Map([
       ["white", this.createNoiseBufferSource("white")],
       ["pink", this.createNoiseBufferSource("pink")],
@@ -34,7 +46,7 @@ export class AudioController {
     for (let i = 0; i < 3; i++) {
       const gain = this.audioContext.createGain();
       gain.gain.value = 0;
-      gain.connect(this.audioContext.destination);
+      gain.connect(this.mainGain);
 
       const oscillator = this.audioContext.createOscillator();
       oscillator.type = "sine";
@@ -61,7 +73,7 @@ export class AudioController {
     return Math.round(2 ** ((value - 49) / 12) * 440);
   }
 
-  public playOrUpdateTone(options: AudioOptions) {
+  public async playOrUpdateTone(options: AudioOptions): Promise<string | void> {
     const now = this.audioContext.currentTime;
 
     options.tones.forEach((tone, i) => {
@@ -135,6 +147,13 @@ export class AudioController {
     this.stopPulsing();
     if (options.pulsing) {
       this.startPulsing(options.tones[0].volume, options.pulseRate || 1);
+    }
+
+    // Handle downloading
+    if (options.isDownloading) {
+      console.log("enter downloadaudio");
+      await this.downloadAudio();
+      return this.getAudioUrl();
     }
 
     this.isPlaying = true;
@@ -223,7 +242,81 @@ export class AudioController {
     });
 
     this.stopPulsing();
+    
+    // Stop recording if active
+    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+      this.mediaRecorder.stop();
+    }
+    
     this.isPlaying = false;
+  }
+
+  private setupRecording() {
+    if (!this.mediaStreamDestination) return;
+
+    this.recordedChunks = [];
+    this.mediaRecorder = new MediaRecorder(this.mediaStreamDestination.stream);
+    
+    this.mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        this.recordedChunks.push(event.data);
+      }
+    };
+  }
+
+  public startRecording() {
+    if (!this.mainGain || !this.mediaStreamDestination) return;
+
+    this.setupRecording();
+    this.mainGain.connect(this.mediaStreamDestination);
+    this.mediaRecorder?.start();
+  }
+
+  public stopRecording(): Promise<Blob> {
+    return new Promise((resolve) => {
+      if (!this.mediaRecorder) {
+        resolve(new Blob());
+        return;
+      }
+
+      this.mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(this.recordedChunks, { type: 'audio/webm' });
+        resolve(audioBlob);
+      };
+
+      this.mediaRecorder.stop();
+      
+      // Disconnect from recording destination
+      if (this.mainGain && this.mediaStreamDestination) {
+        try {
+          this.mainGain.disconnect(this.mediaStreamDestination);
+        } catch (e) {
+          // Connection might already be disconnected
+        }
+      }
+    });
+  }
+
+  public async downloadAudio(duration: number = 5000): Promise<string | void> {
+    // if (!this.isPlaying) return;
+
+    console.log("Starting recording/download...");
+    this.startRecording();
+
+    // Record for specified duration
+    await new Promise(resolve => setTimeout(resolve, duration));
+
+    const audioBlob = await this.stopRecording();
+
+    // Create and return download URL
+    // this.audioUrl = URL.createObjectURL(audioBlob);
+    this.audioUrl = URL.createObjectURL(audioBlob);
+    console.log("Download URL created:", this.audioUrl);
+    return this.audioUrl;
+  }
+
+  public getAudioUrl(): string {
+    return this.audioUrl ? this.audioUrl : "";
   }
 }
 
@@ -235,10 +328,17 @@ export default function PlayPauseComponent() {
   const { options } = useAudioStore.getState();
 
   useEffect(() => {
-    // Bind update function externally
-    useAudioStore.getState().setUpdateSound(() => {
-      if (audioRef.current && isPlaying) {
-        audioRef.current.playOrUpdateTone(useAudioStore.getState().options);
+    // update sound when options change
+    useAudioStore.getState().setUpdateSound(async () => {
+      console.log(audioRef.current);
+      if (audioRef.current) {
+        console.log("online");
+        const res = await audioRef.current.playOrUpdateTone(useAudioStore.getState().options);
+        if (res) {
+          console.log("-----");
+          useAudioStore.getState().setDownloadStatus('done');
+          useAudioStore.getState().setDownloadedSounds(audioRef.current.getAudioUrl());
+        }
       }
     });
   }, [isPlaying]);
@@ -255,7 +355,7 @@ export default function PlayPauseComponent() {
       // Stop and dispose current audio controller
       if (audioRef.current) {
         audioRef.current.stop();
-        audioRef.current = null;
+        // audioRef.current = null;
       }
       setIsPlaying(false);
     }

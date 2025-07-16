@@ -14,7 +14,6 @@
     "@mui/icons-material": "^7.0.1",
     "@mui/material": "^7.0.1",
     "next": "15.2.2",
-    "nouislider": "latest",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "survey-core": "^2.0.3",

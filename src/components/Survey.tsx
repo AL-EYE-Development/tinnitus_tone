@@ -9,6 +9,7 @@ import "./SliderController";
 import "./FreqSliderController";
 import React from "react";
 import { useAudioStore, AudioOptions } from "@/context/AudioContext";
+import { useEffect } from "react";
 
 // const SURVEY_ID = 1;
 import { surveyJson } from "./json.js";
@@ -19,7 +20,7 @@ export default function SurveyComponent() {
 
   const alertResults = useCallback((sender: Model) => {
     const results = JSON.stringify(sender.data);
-    alert(results);
+    // alert(results);
   }, []);
 
   survey.onValueChanged.add((sender, options) => {
@@ -40,6 +41,7 @@ export default function SurveyComponent() {
             noiseband: transformNoiseBand(tone?.noiseband ?? 0.0),
           }))
         : [],
+      isDownloading: false
     };
 
     // console.log(data.tonepanel[0].waveform);
@@ -53,10 +55,37 @@ export default function SurveyComponent() {
 
   // get current surveyjs page 
   survey.onCurrentPageChanged.add((sender, options) => {
-    if (sender.currentPageNo == 3) {
-      console.log("Current page is 3");
+    // third page start initialize sound download
+    if (sender.currentPageNo == 2) {
+      useAudioStore.getState().setIsDownloadInOption(true);
+      const updateSound = useAudioStore.getState().updateSound;
+      if (updateSound) {
+        console.log("start downloading in survey context");
+        updateSound();
+      }
+    }
+
+    if (sender.currentPageNo <= 1) {
+      useAudioStore.getState().setIsDownloadInOption(false);
     }
   });
+
+  useEffect(() => {
+    // Expose download function globally
+    (window as any).downloadSound = () => {
+      // click url
+      const audioUrl = useAudioStore.getState().downloadedSoundsUrl;
+      console.log("Downloading sound from URL:", audioUrl);
+      if (audioUrl) {
+        const link = document.createElement('a');
+        link.href = audioUrl;
+        link.download = 'tinnitus-tone.webm'; // Set filename
+        document.body.appendChild(link);
+        link.click(); // Trigger download
+        document.body.removeChild(link); // Clean up
+      }
+    };
+  }, []);
 
   survey.onComplete.add(alertResults);
 
