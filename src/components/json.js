@@ -14,8 +14,18 @@ export const surveyJson = {
   logoHeight: "128px",
   pages: [
     {
+      name: "Acknowledgement",
+      title: "Section I - Acknowledgement",
+      elements: [
+        {
+          type: "expression",
+          name: "We can put the acknowledgement text here",
+        },
+      ],
+    },
+    {
       name: "info",
-      title: "Section I - Information",
+      title: "Section II - Information",
       elements: [
         {
           // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
@@ -37,7 +47,7 @@ export const surveyJson = {
               title: "Last name",
               // isRequired: true,
               maxLength: 25,
-            }
+            },
           ],
         },
       ],
@@ -45,7 +55,7 @@ export const surveyJson = {
     {
       type: "panel",
       name: "tinnitus-sound",
-      title: "Section II - Sound Matching",
+      title: "Section III - Sound Matching",
       elements: [
         {
           // Left ear, right ear, or both ears? Or is it inside the head? If both ears, is it the same in both ears or different?
@@ -83,7 +93,8 @@ export const surveyJson = {
         },
         {
           type: "expression",
-          title: "You can now use the button in the corner of the page to pause/play"
+          title:
+            "You can now use the button in the corner of the page to pause/play",
         },
         {
           // Is it a click, one tone or more? If more, specify how many (2, 3, more)
@@ -162,7 +173,8 @@ export const surveyJson = {
             {
               name: "noiseband",
               type: "slider",
-              title: "Change the shape of the noise you hear (turn up volume below if you can't hear it when narrowing):",
+              title:
+                "Change the shape of the noise you hear (turn up volume below if you can't hear it when narrowing):",
               default: 1,
               min: 1,
               max: 10,
@@ -188,7 +200,7 @@ export const surveyJson = {
     },
     {
       name: "submit",
-      title: "Section III - Submision & Download",
+      title: "Section IV - Submision & Download",
       elements: [
         {
           // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
@@ -206,7 +218,7 @@ export const surveyJson = {
     },
     {
       name: "Download and play your sound",
-      title: "Section IV - Download and play your sound",
+      title: "Section V - Download and play your sound",
       elements: [
         {
           type: "html",
@@ -214,7 +226,7 @@ export const surveyJson = {
                  <button class="btn btn-primary" onclick="downloadSound()">Download Sound</button>`,
         },
       ],
-    }
+    },
   ],
   completeText: "Submit",
   // showPreviewBeforeComplete: true,
