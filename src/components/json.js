@@ -25,7 +25,7 @@ export const surveyJson = {
     },
     {
       name: "info",
-      title: "Section II - Information",
+      title: "Section II - Main Questionnaire",
       elements: [
         {
           // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
@@ -36,8 +36,8 @@ export const surveyJson = {
             {
               type: "text",
               name: "first-name",
-              title: "First name",
-              // isRequired: true,
+              title: "First name / SubjectId",
+              isRequired: true,
               maxLength: 25,
             },
             {
@@ -47,6 +47,26 @@ export const surveyJson = {
               title: "Last name",
               // isRequired: true,
               maxLength: 25,
+            },
+            {
+              type: "boolean",
+              name: "done_before",
+              title: "Have you done this test before?",
+              isRequired: true,
+              swapOrder: true,
+            },
+          ],
+        },
+        {
+          // Questionnaire - they have to fill out everything before generating and downloading their own tinnitus sound as e.g. mp3
+          type: "panel",
+          name: "tinnitus_symptoms",
+          title: "Tinnitus Symptoms",
+          elements: [
+            {
+              type: "text",
+              name: "how-often",
+              title: "how often do you experience tinnitus?"
             },
           ],
         },
@@ -65,12 +85,8 @@ export const surveyJson = {
           title: "Where do you hear the sound?",
           description:
             "💡 If you can distinguish different sounds in both of your ears, please kindly go through this questionnaire twice.",
-          choices: [
-            " Left ear",
-            " Right ear",
-            " Both ears Same sound",
-            " Inside head",
-          ],
+          isRequired: true,
+          choices: ["Left ear", "Right ear", "Both ears", "Inside head"],
         },
         {
           // Is it constant, pulsing, or random? If pulsing - Slider A for pulse rate/speed
@@ -78,6 +94,7 @@ export const surveyJson = {
           name: "consistency",
           title: "How does the sound's tempo feel like?",
           choices: ["Consistent", "Pulsing", "Random"],
+          isRequired: true,
         },
         {
           // slider for pulsing rate/speed - 0-10Hz, 0-20Hz, 0-30Hz, 0-40Hz, 0-50Hz, 0-60Hz, 0-70Hz, 0-80Hz, 0-90Hz, 0-100Hz
@@ -194,6 +211,11 @@ export const surveyJson = {
             },
           ],
           // maybe add one more how close do you think the sound is to your tinnitus?
+        },
+        {
+          type: "expression",
+          title:
+            "Please keep the audio playing in the next page to ensure downloading works well.",
         },
       ],
       // Two step confirmation - finished, download mp3

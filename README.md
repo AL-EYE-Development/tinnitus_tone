@@ -28,6 +28,13 @@ npm run dev
 The website automatically builds and deploys itself on github pages every time there is a new commit. You can essentially make changes to [survey json file](https://github.com/AL-EYE-Development/tinnitus_tone/blob/main/src/components/json.js) using the user-friendly [tool from SurveyJS](https://surveyjs.io/create-free-survey).
 
 
+### Data collection formats
+
+
+
+
+
+
 ## 🎵 Features
 
 - Customizable tone generation

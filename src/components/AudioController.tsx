@@ -330,9 +330,13 @@ export default function PlayPauseComponent() {
   useEffect(() => {
     // update sound when options change
     useAudioStore.getState().setUpdateSound(async () => {
-      console.log(audioRef.current);
+      // console.log(audioRef.current);
       if (audioRef.current) {
-        console.log("online");
+        if (options.isDownloading) {
+          togglePlay();
+        }
+
+        // console.log("online");
         const res = await audioRef.current.playOrUpdateTone(useAudioStore.getState().options);
         if (res) {
           console.log("-----");

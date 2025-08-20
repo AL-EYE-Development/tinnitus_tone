@@ -18,10 +18,14 @@ export default function SurveyComponent() {
   // setting up the survey model
   const survey = new Model(surveyJson);
 
-  const alertResults = useCallback((sender: Model) => {
-    const results = JSON.stringify(sender.data);
-    // alert(results);
-  }, []);
+  let result = JSON.stringify(survey.data);
+  let subjectName = "";
+  let ear = "";
+
+  // const alertResults = useCallback((sender: Model) => {
+  //   const results = JSON.stringify(sender.data);
+  //   // alert(results);
+  // }, []);
 
   survey.onValueChanged.add((sender, options) => {
     const data = sender.data;
@@ -56,16 +60,30 @@ export default function SurveyComponent() {
   // get current surveyjs page 
   survey.onCurrentPageChanged.add((sender, options) => {
     // third page start initialize sound download
-    if (sender.currentPageNo == 2) {
+    
+    const pageName = sender.currentPage.jsonObj.name;
+    console.log(pageName);
+
+    if (pageName === "submit") {
       useAudioStore.getState().setIsDownloadInOption(true);
       const updateSound = useAudioStore.getState().updateSound;
       if (updateSound) {
         console.log("start downloading in survey context");
         updateSound();
       }
+
+      // copy result to clipboard and show alert
+      result = JSON.stringify(sender.data); // get data
+      navigator.clipboard.writeText(result);
+      alert(`Your data is now copied to clipboard. \nPlease paste and submit to our secured server in the next page, \nand download your tinnitus sound file afterwards.`);
+
+      // set subjectName
+      console.log(sender.data);
+      subjectName = sender.data["first-name"];
+      ear = sender.data["which-ear"];
     }
 
-    if (sender.currentPageNo <= 1) {
+    if (sender.currentPageNo <= 2) {
       useAudioStore.getState().setIsDownloadInOption(false);
     }
   });
@@ -73,13 +91,15 @@ export default function SurveyComponent() {
   useEffect(() => {
     // Expose download function globally
     (window as any).downloadSound = () => {
+      const timeString = new Date().toISOString();
+
       // click url
       const audioUrl = useAudioStore.getState().downloadedSoundsUrl;
       console.log("Downloading sound from URL:", audioUrl);
       if (audioUrl) {
         const link = document.createElement('a');
         link.href = audioUrl;
-        link.download = 'tinnitus-tone.webm'; // Set filename
+        link.download = 'tinnitus_' + subjectName + '_' + ear + '_' + timeString + '.mp3'; // Set filename
         document.body.appendChild(link);
         link.click(); // Trigger download
         document.body.removeChild(link); // Clean up
@@ -87,7 +107,7 @@ export default function SurveyComponent() {
     };
   }, []);
 
-  survey.onComplete.add(alertResults);
+  // survey.onComplete.add(alertResults);
 
   return <Survey model={survey} />;
 }
